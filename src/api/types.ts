@@ -40,7 +40,7 @@ export interface GetInfoFromScannedCodeRequest {
  */
 export interface ScannedCodeInfo {
   codigo: string;
-  tipo: 'caja' | 'pallet';
+  pkTipo: 'BOX' | 'PALLET';
   producto?: {
     id: string;
     nombre: string;
@@ -52,9 +52,14 @@ export interface ScannedCodeInfo {
     posicion?: string;
   };
   estado: 'activo' | 'inactivo' | 'bloqueado';
-  fechaCreacion: string;
-  ultimaActualizacion: string;
+  timestamp: string;
+  scannedAt: string;
+  fecha_registro: string;
   informacionAdicional?: Record<string, unknown>;
+  contador: string;
+  operario: string;
+  empacadora: string;
+  formato_caja: string;
 }
 
 /**
@@ -135,4 +140,22 @@ export interface ProcessScanResult {
     timestamp: string;
     [key: string]: any;
   };
-} 
+}
+
+/**
+ * Toggle Pallet Status Request
+ */
+export interface TogglePalletStatusRequest {
+  codigo: string;
+}
+
+/**
+ * Toggle Pallet Status Response
+ */
+export interface TogglePalletStatusResult {
+  codigo: string;
+  estadoAnterior: 'abierto' | 'cerrado';
+  estadoNuevo: 'abierto' | 'cerrado';
+  mensaje: string;
+  fechaActualizacion: string;
+}

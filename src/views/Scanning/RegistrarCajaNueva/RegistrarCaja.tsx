@@ -13,7 +13,7 @@ const RegistrarCaja: React.FC = () => {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    
+
     if (!codigo.trim()) {
       return;
     }
@@ -30,7 +30,7 @@ const RegistrarCaja: React.FC = () => {
 
     await processScan({
       codigo: codigo.trim(),
-      ubicacion: 'PACKING' // Por defecto PACKING
+      ubicacion: 'PACKING', // Por defecto PACKING
     });
   };
 
@@ -71,79 +71,87 @@ const RegistrarCaja: React.FC = () => {
 
   const validation = validateScannedCode(codigo);
   const showValidationError = codigo.length > 0 && !validation.isValid;
-  const showTypeError = codigo.length > 0 && validation.isValid && validation.type !== 'box';
+  const showTypeError =
+    codigo.length > 0 && validation.isValid && validation.type !== 'box';
 
   return (
-    <div className="registrar-caja-content">
-      <div className="registrar-caja-header">
-        <button onClick={handleBack} className="back-btn">
+    <div className='registrar-caja-content'>
+      <div className='registrar-caja-header'>
+        <button onClick={handleBack} className='back-btn'>
           ← Volver
         </button>
         <h1>Escanear Nueva Caja</h1>
         <p>Escanea o ingresa el código de la nueva caja para PACKING</p>
-        
+
         {/* Toggle Scanner Mode */}
-        <div className="scanner-mode-toggle">
-          <button 
+        <div className='scanner-mode-toggle'>
+          <button
             onClick={toggleScanBoxMode}
             className={`toggle-btn ${scanBoxMode ? 'active' : ''}`}
             disabled={loading}
           >
-            <span className="toggle-icon">
-              {scanBoxMode ? '📱' : '⚡'}
-            </span>
-            <span className="toggle-text">
+            <span className='toggle-icon'>{scanBoxMode ? '📱' : '⚡'}</span>
+            <span className='toggle-text'>
               {scanBoxMode ? 'Modo Scanner: ON' : 'Modo Scanner: OFF'}
             </span>
           </button>
           {scanBoxMode && (
-            <p className="scanner-mode-info">
-              🔍 Modo scanner activo - El campo permanecerá enfocado para escaneo consecutivo
+            <p className='scanner-mode-info'>
+              🔍 Modo scanner activo - El campo permanecerá enfocado para
+              escaneo consecutivo
             </p>
           )}
         </div>
       </div>
 
       {error && (
-        <div className="error-section">
-          <div className="error-message">
-            <span className="error-icon">⚠️</span>
-            <span className="error-text">{error}</span>
-            <button onClick={reset} className="error-close">✕</button>
+        <div className='error-section'>
+          <div className='error-message'>
+            <span className='error-icon'>⚠️</span>
+            <span className='error-text'>{error}</span>
+            <button onClick={reset} className='error-close'>
+              ✕
+            </button>
           </div>
         </div>
       )}
 
       {/* Resultado exitoso */}
       {data && data.success && (
-        <div className="success-section">
-          <div className="success-message">
-            <span className="success-icon">✅</span>
-            <div className="success-content">
+        <div className='success-section'>
+          <div className='success-message'>
+            <span className='success-icon'>✅</span>
+            <div className='success-content'>
               <h3>¡Caja procesada exitosamente!</h3>
-              <div className="success-details">
-                <p><strong>Código:</strong> {data.data?.codigo}</p>
-                <p><strong>Ubicación:</strong> {data.data?.ubicacion}</p>
-                <p><strong>Estado:</strong> {data.data?.estado}</p>
+              <div className='success-details'>
+                <p>
+                  <strong>Código:</strong> {data.data?.codigo}
+                </p>
+                <p>
+                  <strong>Ubicación:</strong> {data.data?.ubicacion}
+                </p>
+                <p>
+                  <strong>Estado:</strong> {data.data?.estado}
+                </p>
               </div>
-              <p className="success-note">Puede escanear otra caja</p>
+              <p className='success-note'>Puede escanear otra caja</p>
             </div>
           </div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="scan-form">
-        <div className="form-section">
-          <div className="form-group">
-            <label htmlFor="codigo" className="form-label">
+      <form onSubmit={handleSubmit} className='scan-form'>
+        <div className='form-section'>
+          <div className='form-group'>
+            <label htmlFor='codigo' className='form-label'>
               Código de Caja
             </label>
             <input
               ref={inputRef}
-              type="text"
-              id="codigo"
+              type='text'
+              id='codigo'
               value={codigo}
-              onChange={(e) => setCodigo(e.target.value)}
+              onChange={e => setCodigo(e.target.value)}
               onKeyPress={handleKeyPress}
               onBlur={() => {
                 // Si está en modo scanner, volver a enfocar después de un breve delay
@@ -155,62 +163,79 @@ const RegistrarCaja: React.FC = () => {
                   }, 100);
                 }
               }}
-              placeholder={scanBoxMode ? "Escanea códigos consecutivamente..." : "Escanea o ingresa código de 15 dígitos"}
+              placeholder={
+                scanBoxMode
+                  ? 'Escanea códigos consecutivamente...'
+                  : 'Escanea o ingresa código de 15 dígitos'
+              }
               className={`form-input code-input ${showValidationError || showTypeError ? 'error' : ''} ${scanBoxMode ? 'scanner-mode' : ''}`}
               disabled={loading}
               autoFocus
               maxLength={15}
             />
-            
+
             {showValidationError && (
-              <span className="validation-error">
+              <span className='validation-error'>
                 {validation.errorMessage}
               </span>
             )}
 
             {showTypeError && (
-              <span className="validation-error">
-                Este código es de un pallet. Solo se permiten códigos de caja (15 dígitos).
+              <span className='validation-error'>
+                Este código es de un pallet. Solo se permiten códigos de caja
+                (15 dígitos).
               </span>
             )}
 
-            {codigo.length > 0 && validation.isValid && validation.type === 'box' && (
-              <span className="validation-success">
-                ✓ Código válido - Presiona Enter para procesar
-              </span>
-            )}
+            {codigo.length > 0 &&
+              validation.isValid &&
+              validation.type === 'box' && (
+                <span className='validation-success'>
+                  ✓ Código válido - Presiona Enter para procesar
+                </span>
+              )}
           </div>
 
-          <div className="info-box">
+          <div className='info-box'>
             <h4>Información</h4>
             <ul>
-              <li>• Ubicación: <strong>PACKING</strong> (automática)</li>
+              <li>
+                • Ubicación: <strong>PACKING</strong> (automática)
+              </li>
               <li>• Solo códigos de caja (15 dígitos)</li>
-              <li>• Presiona <kbd>Enter</kbd> para procesar</li>
+              <li>
+                • Presiona <kbd>Enter</kbd> para procesar
+              </li>
               {scanBoxMode ? (
-                <li>• <strong>Modo Scanner:</strong> Campo siempre enfocado para escaneo consecutivo</li>
+                <li>
+                  • <strong>Modo Scanner:</strong> Campo siempre enfocado para
+                  escaneo consecutivo
+                </li>
               ) : (
-                <li>• Activa el <strong>Modo Scanner</strong> para escaneo con dispositivo físico</li>
+                <li>
+                  • Activa el <strong>Modo Scanner</strong> para escaneo con
+                  dispositivo físico
+                </li>
               )}
             </ul>
           </div>
 
           {/* Códigos de prueba para desarrollo */}
-          <div className="test-codes">
+          <div className='test-codes'>
             <p>Códigos de prueba:</p>
-            <div className="test-buttons">
+            <div className='test-buttons'>
               <button
-                type="button"
+                type='button'
                 onClick={() => setCodigo('123456789012345')}
-                className="test-btn"
+                className='test-btn'
                 disabled={loading}
               >
                 Caja: 123456789012345
               </button>
               <button
-                type="button"
+                type='button'
                 onClick={() => setCodigo('987654321098765')}
-                className="test-btn"
+                className='test-btn'
                 disabled={loading}
               >
                 Caja: 987654321098765
@@ -221,8 +246,8 @@ const RegistrarCaja: React.FC = () => {
       </form>
 
       {loading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
+        <div className='loading-overlay'>
+          <div className='loading-spinner'></div>
           <p>Procesando caja...</p>
         </div>
       )}
@@ -230,4 +255,4 @@ const RegistrarCaja: React.FC = () => {
   );
 };
 
-export default RegistrarCaja; 
+export default RegistrarCaja;

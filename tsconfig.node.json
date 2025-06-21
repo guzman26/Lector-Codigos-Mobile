@@ -11,4 +11,4 @@
     "declarationMap": true
   },
   "include": ["vite.config.ts"]
-} 
+}

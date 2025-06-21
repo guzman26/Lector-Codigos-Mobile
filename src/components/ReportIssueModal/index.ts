@@ -1,1 +1,1 @@
-export { default } from './ReportIssueModal'; 
+export { default } from './ReportIssueModal';

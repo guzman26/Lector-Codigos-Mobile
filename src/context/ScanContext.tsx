@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { submitScan, ApiClientError } from '../api';
 import type { ProcessScanRequest, ProcessScanResult } from '../api/types';
 
@@ -40,24 +46,25 @@ export const ScanProvider: React.FC<ScanProviderProps> = ({ children }) => {
 
     try {
       const result = await submitScan(request);
-      
+
       setData(result);
-      
+
       // Agregar al historial (evitar duplicados)
       setHistory(prev => {
-        const exists = prev.some(item => 
-          item.data?.codigo === result.data?.codigo && 
-          item.data?.timestamp === result.data?.timestamp
+        const exists = prev.some(
+          item =>
+            item.data?.codigo === result.data?.codigo &&
+            item.data?.timestamp === result.data?.timestamp
         );
         if (exists) return prev;
         return [result, ...prev.slice(0, 19)]; // Mantener solo 20 elementos
       });
-      
     } catch (error) {
-      const errorMessage = error instanceof ApiClientError 
-        ? error.message 
-        : 'Error desconocido al procesar el escaneo';
-      
+      const errorMessage =
+        error instanceof ApiClientError
+          ? error.message
+          : 'Error desconocido al procesar el escaneo';
+
       setError(errorMessage);
       setData(null);
     } finally {
@@ -85,11 +92,7 @@ export const ScanProvider: React.FC<ScanProviderProps> = ({ children }) => {
     clearHistory,
   };
 
-  return (
-    <ScanContext.Provider value={value}>
-      {children}
-    </ScanContext.Provider>
-  );
+  return <ScanContext.Provider value={value}>{children}</ScanContext.Provider>;
 };
 
 export const useScanContext = (): ScanContextType => {
@@ -98,4 +101,4 @@ export const useScanContext = (): ScanContextType => {
     throw new Error('useScanContext must be used within ScanProvider');
   }
   return context;
-}; 
+};

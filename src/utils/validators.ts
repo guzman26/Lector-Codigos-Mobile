@@ -5,10 +5,10 @@ import type { CodeValidationResult } from '../api/types';
  */
 export const isValidBoxCode = (code: string): boolean => {
   if (!code || typeof code !== 'string') return false;
-  
+
   // Remove any whitespace
   const cleanCode = code.trim();
-  
+
   // Check if it's exactly 15 digits
   return /^\d{15}$/.test(cleanCode);
 };
@@ -18,10 +18,10 @@ export const isValidBoxCode = (code: string): boolean => {
  */
 export const isValidPalletCode = (code: string): boolean => {
   if (!code || typeof code !== 'string') return false;
-  
+
   // Remove any whitespace
   const cleanCode = code.trim();
-  
+
   // Check if it's exactly 12 digits
   return /^\d{12}$/.test(cleanCode);
 };
@@ -33,7 +33,7 @@ export const validateScannedCode = (code: string): CodeValidationResult => {
   if (!code || typeof code !== 'string') {
     return {
       isValid: false,
-      errorMessage: 'El código es requerido'
+      errorMessage: 'El código es requerido',
     };
   }
 
@@ -42,7 +42,7 @@ export const validateScannedCode = (code: string): CodeValidationResult => {
   if (cleanCode.length === 0) {
     return {
       isValid: false,
-      errorMessage: 'El código no puede estar vacío'
+      errorMessage: 'El código no puede estar vacío',
     };
   }
 
@@ -50,7 +50,7 @@ export const validateScannedCode = (code: string): CodeValidationResult => {
   if (isValidBoxCode(cleanCode)) {
     return {
       isValid: true,
-      type: 'box'
+      type: 'box',
     };
   }
 
@@ -58,14 +58,15 @@ export const validateScannedCode = (code: string): CodeValidationResult => {
   if (isValidPalletCode(cleanCode)) {
     return {
       isValid: true,
-      type: 'pallet'
+      type: 'pallet',
     };
   }
 
   // Invalid code
   return {
     isValid: false,
-    errorMessage: 'El código debe ser válido: código de caja (15 dígitos) o código de pallet (12 dígitos)'
+    errorMessage:
+      'El código debe ser válido: código de caja (15 dígitos) o código de pallet (12 dígitos)',
   };
 };
 
@@ -74,7 +75,7 @@ export const validateScannedCode = (code: string): CodeValidationResult => {
  */
 export const sanitizeCode = (code: string): string => {
   if (!code || typeof code !== 'string') return '';
-  
+
   return code.replace(/\D/g, ''); // Remove all non-digit characters
 };
 
@@ -83,28 +84,30 @@ export const sanitizeCode = (code: string): string => {
  */
 export const formatCodeForDisplay = (code: string): string => {
   const clean = sanitizeCode(code);
-  
+
   if (clean.length === 12) {
     // Format pallet code: XXXX-XXXX-XXXX
     return clean.replace(/(\d{4})(\d{4})(\d{4})/, '$1-$2-$3');
   }
-  
+
   if (clean.length === 15) {
     // Format box code: XXXXX-XXXXX-XXXXX
     return clean.replace(/(\d{5})(\d{5})(\d{5})/, '$1-$2-$3');
   }
-  
+
   return clean;
 };
 
 /**
  * Validates issue report description
  */
-export const validateIssueDescription = (description: string): { isValid: boolean; errorMessage?: string } => {
+export const validateIssueDescription = (
+  description: string
+): { isValid: boolean; errorMessage?: string } => {
   if (!description || typeof description !== 'string') {
     return {
       isValid: false,
-      errorMessage: 'La descripción es requerida'
+      errorMessage: 'La descripción es requerida',
     };
   }
 
@@ -113,25 +116,25 @@ export const validateIssueDescription = (description: string): { isValid: boolea
   if (trimmed.length === 0) {
     return {
       isValid: false,
-      errorMessage: 'La descripción no puede estar vacía'
+      errorMessage: 'La descripción no puede estar vacía',
     };
   }
 
   if (trimmed.length > 1000) {
     return {
       isValid: false,
-      errorMessage: 'La descripción no puede exceder los 1000 caracteres'
+      errorMessage: 'La descripción no puede exceder los 1000 caracteres',
     };
   }
 
   if (trimmed.length < 10) {
     return {
       isValid: false,
-      errorMessage: 'La descripción debe tener al menos 10 caracteres'
+      errorMessage: 'La descripción debe tener al menos 10 caracteres',
     };
   }
 
   return {
-    isValid: true
+    isValid: true,
   };
-}; 
+};

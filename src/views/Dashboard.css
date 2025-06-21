@@ -449,43 +449,43 @@
     padding: 0.5rem;
     gap: 1.5rem;
   }
-  
+
   .action-btn {
     min-height: 70px;
     padding: 1.25rem;
   }
-  
+
   .btn-text {
     font-size: 1rem;
   }
-  
+
   .scanner-section,
   .last-scan-section,
   .quick-history-section,
   .status-section {
     padding: 1rem;
   }
-  
+
   .result-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .scanner-input-group {
     flex-direction: column;
   }
-  
+
   .scan-submit-btn {
     width: 100%;
   }
-  
+
   .history-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .detail-row {
     flex-direction: column;
     align-items: flex-start;
@@ -497,20 +497,20 @@
   .actions-section {
     gap: 0.75rem;
   }
-  
+
   .action-btn {
     min-height: 60px;
     padding: 1rem;
   }
-  
+
   .btn-text {
     font-size: 0.875rem;
   }
-  
+
   .code-display {
     font-size: 1rem;
   }
-  
+
   .quick-code-btn {
     width: 100%;
     margin: 0.25rem 0;
@@ -608,7 +608,7 @@
   .dashboard-content {
     color: #e6edf3;
   }
-  
+
   .scanner-section,
   .last-scan-section,
   .quick-history-section,
@@ -616,36 +616,36 @@
     background-color: #21262d;
     border-color: #30363d;
   }
-  
+
   .section-title {
     color: #e6edf3;
   }
-  
+
   .scanner-input {
     background-color: #0d1117;
     border-color: #30363d;
     color: #e6edf3;
   }
-  
+
   .scanner-input:disabled {
     background-color: #21262d;
     color: #8b949e;
   }
-  
+
   .result-header,
   .history-item {
     background-color: #262c36;
     border-color: #30363d;
   }
-  
+
   .code-display,
   .detail-value,
   .history-code {
     color: #e6edf3;
   }
-  
+
   .detail-label,
   .status-label {
     color: #8b949e;
   }
-} 
+}

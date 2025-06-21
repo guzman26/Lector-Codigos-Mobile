@@ -27,37 +27,39 @@ const Dashboard: React.FC = () => {
     if (scanData) {
       // New scan data format
       return (
-        <div className="last-scan-section">
-          <h3 className="section-title">Último Código Procesado</h3>
-          <div className="scan-result-card">
-            <div className="result-header">
-              <span className="code-display">
+        <div className='last-scan-section'>
+          <h3 className='section-title'>Último Código Procesado</h3>
+          <div className='scan-result-card'>
+            <div className='result-header'>
+              <span className='code-display'>
                 {formatCodeForDisplay(scanData.data?.codigo || '')}
               </span>
-              <span className={`code-type ${scanData.data?.tipo?.toLowerCase()}`}>
+              <span
+                className={`code-type ${scanData.data?.tipo?.toLowerCase()}`}
+              >
                 {scanData.data?.tipo === 'BOX' ? 'Caja' : 'Pallet'}
               </span>
             </div>
-            
-            <div className="result-details">
-              <div className="detail-row">
-                <span className="detail-label">Ubicación:</span>
-                <span className="detail-value">{scanData.data?.ubicacion}</span>
+
+            <div className='result-details'>
+              <div className='detail-row'>
+                <span className='detail-label'>Ubicación:</span>
+                <span className='detail-value'>{scanData.data?.ubicacion}</span>
               </div>
-              
-              <div className="detail-row">
-                <span className="detail-label">Estado:</span>
+
+              <div className='detail-row'>
+                <span className='detail-label'>Estado:</span>
                 <span className={`status-badge ${scanData.data?.estado}`}>
-                  {scanData.data?.estado ? 
-                    scanData.data.estado.charAt(0).toUpperCase() + scanData.data.estado.slice(1) :
-                    'Desconocido'
-                  }
+                  {scanData.data?.estado
+                    ? scanData.data.estado.charAt(0).toUpperCase() +
+                      scanData.data.estado.slice(1)
+                    : 'Desconocido'}
                 </span>
               </div>
 
-              <div className="detail-row">
-                <span className="detail-label">Mensaje:</span>
-                <span className="detail-value">{scanData.message}</span>
+              <div className='detail-row'>
+                <span className='detail-label'>Mensaje:</span>
+                <span className='detail-value'>{scanData.message}</span>
               </div>
             </div>
           </div>
@@ -66,39 +68,42 @@ const Dashboard: React.FC = () => {
     } else if (oldData) {
       // Legacy data format
       return (
-        <div className="last-scan-section">
-          <h3 className="section-title">Último Código Escaneado</h3>
-          <div className="scan-result-card">
-            <div className="result-header">
-              <span className="code-display">
+        <div className='last-scan-section'>
+          <h3 className='section-title'>Último Código Escaneado</h3>
+          <div className='scan-result-card'>
+            <div className='result-header'>
+              <span className='code-display'>
                 {formatCodeForDisplay(oldData.codigo)}
               </span>
               <span className={`code-type ${oldData.tipo}`}>
                 {oldData.tipo === 'caja' ? 'Caja' : 'Pallet'}
               </span>
             </div>
-            
-            <div className="result-details">
+
+            <div className='result-details'>
               {oldData.producto && (
-                <div className="detail-row">
-                  <span className="detail-label">Producto:</span>
-                  <span className="detail-value">{oldData.producto.nombre}</span>
+                <div className='detail-row'>
+                  <span className='detail-label'>Producto:</span>
+                  <span className='detail-value'>
+                    {oldData.producto.nombre}
+                  </span>
                 </div>
               )}
-              
+
               {oldData.ubicacion && (
-                <div className="detail-row">
-                  <span className="detail-label">Ubicación:</span>
-                  <span className="detail-value">
+                <div className='detail-row'>
+                  <span className='detail-label'>Ubicación:</span>
+                  <span className='detail-value'>
                     {oldData.ubicacion.almacen} - {oldData.ubicacion.zona}
                   </span>
                 </div>
               )}
-              
-              <div className="detail-row">
-                <span className="detail-label">Estado:</span>
+
+              <div className='detail-row'>
+                <span className='detail-label'>Estado:</span>
                 <span className={`status-badge ${oldData.estado}`}>
-                  {oldData.estado.charAt(0).toUpperCase() + oldData.estado.slice(1)}
+                  {oldData.estado.charAt(0).toUpperCase() +
+                    oldData.estado.slice(1)}
                 </span>
               </div>
             </div>
@@ -109,42 +114,34 @@ const Dashboard: React.FC = () => {
     return null;
   };
 
-
   return (
-    <div className="dashboard-content">
+    <div className='dashboard-content'>
       {/* Sección de Acciones */}
-      <div className="actions-section">
-        <button 
-          className="action-btn primary"
-          onClick={handleRegistrarCaja}
-        >
-          <span className="btn-text">Escanear Nueva Caja</span>
+      <div className='actions-section'>
+        <button className='action-btn primary' onClick={handleRegistrarCaja}>
+          <span className='btn-text'>Escanear Nueva Caja</span>
         </button>
 
-        <button 
-          className="action-btn"
+        <button
+          className='action-btn'
           onClick={() => navigate('/consultar-codigo')}
         >
-          <span className="btn-text">Consultar Código</span>
+          <span className='btn-text'>Consultar Código</span>
         </button>
 
-        <button 
-          className="action-btn"
+        <button
+          className='action-btn'
           onClick={() => navigate('/crear-pallet')}
         >
-          <span className="btn-text">Crear Pallet</span>
+          <span className='btn-text'>Crear Pallet</span>
         </button>
-        
-        <button 
-          className="action-btn"
-          onClick={() => navigate('/historial')}
-        >
-          <span className="btn-text">Ver Historial ({history.length})</span>
+
+        <button className='action-btn' onClick={() => navigate('/historial')}>
+          <span className='btn-text'>Ver Historial ({history.length})</span>
         </button>
-        
-        <button className="action-btn"
-        onClick={handleReportClick}>
-          <span className="btn-text">Registrar Problema</span>
+
+        <button className='action-btn' onClick={handleReportClick}>
+          <span className='btn-text'>Registrar Problema</span>
         </button>
       </div>
 
@@ -152,7 +149,7 @@ const Dashboard: React.FC = () => {
       {renderData()}
 
       {/* Modal de Reporte de Problemas */}
-      <ReportIssueModal 
+      <ReportIssueModal
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
       />
@@ -160,4 +157,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

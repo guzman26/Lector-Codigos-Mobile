@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 
 interface ThemeContextType {
   isDarkMode: boolean;
@@ -17,7 +23,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     // Cargar la preferencia del tema desde localStorage
     const savedTheme = localStorage.getItem('theme');
-    
+
     if (savedTheme === 'dark') {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark-theme');
@@ -35,7 +41,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const toggleTheme = () => {
     const newTheme = !isDarkMode;
     setIsDarkMode(newTheme);
-    
+
     if (newTheme) {
       document.documentElement.classList.add('dark-theme');
       localStorage.setItem('theme', 'dark');
@@ -51,9 +57,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 };
 
@@ -63,4 +67,4 @@ export const useTheme = (): ThemeContextType => {
     throw new Error('useTheme must be used within ThemeProvider');
   }
   return context;
-}; 
+};

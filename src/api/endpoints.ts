@@ -1,7 +1,10 @@
 import { apiClient } from './apiClient';
-import { validateScannedCode, validateIssueDescription } from '../utils/validators';
-import type { 
-  GetInfoFromScannedCodeRequest, 
+import {
+  validateScannedCode,
+  validateIssueDescription,
+} from '../utils/validators';
+import type {
+  GetInfoFromScannedCodeRequest,
   ScannedCodeInfo,
   PostIssueRequest,
   IssueReportResult,
@@ -9,7 +12,9 @@ import type {
   RegisterBoxResult,
   ProcessScanRequest,
   ProcessScanResult,
-  ApiResponse 
+  TogglePalletStatusRequest,
+  TogglePalletStatusResult,
+  ApiResponse,
 } from './types';
 
 /**
@@ -21,7 +26,7 @@ export const getInfoFromScannedCode = async (
 ): Promise<ApiResponse<ScannedCodeInfo>> => {
   // Client-side validation
   const validation = validateScannedCode(request.codigo);
-  
+
   if (!validation.isValid) {
     throw new apiClient.ApiClientError(
       validation.errorMessage || 'Código inválido',
@@ -31,9 +36,6 @@ export const getInfoFromScannedCode = async (
 
   // Make the API request
   try {
-    console.log('📡 Making API request with params:', { codigo: request.codigo.trim() });
-    console.log('📡 Full URL will be:', `${import.meta.env.VITE_API_URL}/getInfoFromScannedCode?codigo=${encodeURIComponent(request.codigo.trim())}`);
-    
     const response = await apiClient.get<ScannedCodeInfo>(
       '/getInfoFromScannedCode',
       { codigo: request.codigo.trim() }
@@ -45,7 +47,7 @@ export const getInfoFromScannedCode = async (
     if (error instanceof apiClient.ApiClientError) {
       throw error;
     }
-    
+
     throw new apiClient.ApiClientError(
       'Error al obtener información del código escaneado',
       'REQUEST_FAILED',
@@ -63,7 +65,7 @@ export const postIssue = async (
 ): Promise<ApiResponse<IssueReportResult>> => {
   // Client-side validation
   const validation = validateIssueDescription(request.descripcion);
-  
+
   if (!validation.isValid) {
     throw new apiClient.ApiClientError(
       validation.errorMessage || 'Descripción inválida',
@@ -72,21 +74,13 @@ export const postIssue = async (
   }
 
   // Development mode: simulate API response (also used as fallback if real API fails)
-  const shouldUseMockMode = import.meta.env.DEV && (
-    !import.meta.env.VITE_API_URL || 
-    import.meta.env.VITE_API_URL.includes('localhost') ||
-    import.meta.env.VITE_USE_MOCK_API === 'true'
-  );
+  const shouldUseMockMode =
+    import.meta.env.DEV &&
+    (!import.meta.env.VITE_API_URL ||
+      import.meta.env.VITE_API_URL.includes('localhost') ||
+      import.meta.env.VITE_USE_MOCK_API === 'true');
 
   if (shouldUseMockMode) {
-    console.log('🔧 Development Mode: Simulating postIssue API call', {
-      descripcion: request.descripcion,
-      timestamp: new Date().toISOString(),
-      reason: !import.meta.env.VITE_API_URL ? 'No API URL' : 
-              import.meta.env.VITE_API_URL.includes('localhost') ? 'Localhost URL' : 
-              'Mock mode enabled'
-    });
-
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -97,30 +91,26 @@ export const postIssue = async (
         id: `RPT-${Date.now()}`,
         mensaje: 'Reporte recibido exitosamente (modo desarrollo)',
         fechaReporte: new Date().toISOString(),
-        estado: 'recibido'
+        estado: 'recibido',
       },
-      message: 'Reporte enviado correctamente'
+      message: 'Reporte enviado correctamente',
     };
   }
 
   // Make the API request
   try {
-    console.log('📡 Making real API request to:', `${import.meta.env.VITE_API_URL}/postIssue`);
-    
-    const response = await apiClient.post<IssueReportResult>(
-      '/postIssue',
-      { descripcion: request.descripcion.trim() }
-    );
+    const response = await apiClient.post<IssueReportResult>('/postIssue', {
+      descripcion: request.descripcion.trim(),
+    });
 
-    console.log('✅ API Response received:', response);
     return response;
   } catch (error) {
     console.error('❌ API Request failed:', error);
-    
+
     // In development, if the real API fails, fall back to mock mode
     if (import.meta.env.DEV) {
       console.warn('🔄 Falling back to mock mode due to API failure');
-      
+
       // Simulate success response as fallback
       return {
         success: true,
@@ -128,17 +118,17 @@ export const postIssue = async (
           id: `RPT-FALLBACK-${Date.now()}`,
           mensaje: 'Reporte recibido (fallback - API no disponible)',
           fechaReporte: new Date().toISOString(),
-          estado: 'recibido'
+          estado: 'recibido',
         },
-        message: 'Reporte enviado correctamente (modo fallback)'
+        message: 'Reporte enviado correctamente (modo fallback)',
       };
     }
-    
+
     // Re-throw with more context if needed
     if (error instanceof apiClient.ApiClientError) {
       throw error;
     }
-    
+
     throw new apiClient.ApiClientError(
       'Error al enviar el reporte',
       'REQUEST_FAILED',
@@ -151,46 +141,46 @@ export const postIssue = async (
  * Alternative method that returns only the data or throws an error
  * Useful for simpler error handling in components
  */
-export const submitIssueReport = async (descripcion: string): Promise<IssueReportResult> => {
+export const submitIssueReport = async (
+  descripcion: string
+): Promise<IssueReportResult> => {
   const response = await postIssue({ descripcion });
-  
-  console.log('🔍 Analyzing API response in submitIssueReport:', response);
-  
+
   // Handle different response formats from the API
   // Check if response indicates success (either explicit success flag or presence of data)
-  const isSuccessful = response.success !== false && (
-    response.data || 
-    (response as any).issueNumber || 
-    (response as any).message
-  );
-  
+  const isSuccessful =
+    response.success !== false &&
+    (response.data ||
+      (response as any).issueNumber ||
+      (response as any).message);
+
   if (!isSuccessful) {
     throw new apiClient.ApiClientError(
       response.error || 'No se pudo enviar el reporte',
       'NO_DATA'
     );
   }
-  
+
   // Return the appropriate data based on response structure
   if (response.data) {
     return response.data;
   }
-  
+
   // If data is null but we have other response fields, construct our own result
   if ((response as any).issueNumber || (response as any).message) {
     return {
       id: (response as any).issueNumber || `RPT-${Date.now()}`,
       mensaje: (response as any).message || 'Reporte enviado exitosamente',
       fechaReporte: new Date().toISOString(),
-      estado: 'recibido'
+      estado: 'recibido',
     };
   }
-  
+
   // Fallback
   return {
     mensaje: 'Reporte enviado exitosamente',
     fechaReporte: new Date().toISOString(),
-    estado: 'recibido'
+    estado: 'recibido',
   };
 };
 
@@ -203,7 +193,7 @@ export const registerBox = async (
 ): Promise<ApiResponse<RegisterBoxResult>> => {
   // Client-side validation
   const validation = validateScannedCode(request.codigo);
-  
+
   if (!validation.isValid) {
     throw new apiClient.ApiClientError(
       validation.errorMessage || 'Código de caja inválido',
@@ -226,22 +216,13 @@ export const registerBox = async (
   }
 
   // Development mode: simulate API response
-  const shouldUseMockMode = import.meta.env.DEV && (
-    !import.meta.env.VITE_API_URL || 
-    import.meta.env.VITE_API_URL.includes('localhost') ||
-    import.meta.env.VITE_USE_MOCK_API === 'true'
-  );
+  const shouldUseMockMode =
+    import.meta.env.DEV &&
+    (!import.meta.env.VITE_API_URL ||
+      import.meta.env.VITE_API_URL.includes('localhost') ||
+      import.meta.env.VITE_USE_MOCK_API === 'true');
 
   if (shouldUseMockMode) {
-    console.log('🔧 Development Mode: Simulating registerBox API call', {
-      codigo: request.codigo,
-      producto: request.producto,
-      timestamp: new Date().toISOString(),
-      reason: !import.meta.env.VITE_API_URL ? 'No API URL' : 
-              import.meta.env.VITE_API_URL.includes('localhost') ? 'Localhost URL' : 
-              'Mock mode enabled'
-    });
-
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -253,37 +234,31 @@ export const registerBox = async (
         codigo: request.codigo.trim(),
         mensaje: 'Caja registrada exitosamente (modo desarrollo)',
         fechaRegistro: new Date().toISOString(),
-        estado: 'registrado'
+        estado: 'registrado',
       },
-      message: 'Caja registrada correctamente'
+      message: 'Caja registrada correctamente',
     };
   }
 
   // Make the API request
   try {
-    console.log('📡 Making real API request to:', `${import.meta.env.VITE_API_URL}/registerBox`);
-    
-    const response = await apiClient.post<RegisterBoxResult>(
-      '/registerBox',
-      {
-        codigo: request.codigo.trim(),
-        producto: request.producto.trim(),
-        lote: request.lote?.trim(),
-        fechaVencimiento: request.fechaVencimiento,
-        ubicacion: request.ubicacion,
-        observaciones: request.observaciones?.trim()
-      }
-    );
+    const response = await apiClient.post<RegisterBoxResult>('/registerBox', {
+      codigo: request.codigo.trim(),
+      producto: request.producto.trim(),
+      lote: request.lote?.trim(),
+      fechaVencimiento: request.fechaVencimiento,
+      ubicacion: request.ubicacion,
+      observaciones: request.observaciones?.trim(),
+    });
 
-    console.log('✅ API Response received:', response);
     return response;
   } catch (error) {
     console.error('❌ API Request failed:', error);
-    
+
     // In development, if the real API fails, fall back to mock mode
     if (import.meta.env.DEV) {
       console.warn('🔄 Falling back to mock mode due to API failure');
-      
+
       // Simulate success response as fallback
       return {
         success: true,
@@ -292,17 +267,17 @@ export const registerBox = async (
           codigo: request.codigo.trim(),
           mensaje: 'Caja registrada (fallback - API no disponible)',
           fechaRegistro: new Date().toISOString(),
-          estado: 'registrado'
+          estado: 'registrado',
         },
-        message: 'Caja registrada correctamente (modo fallback)'
+        message: 'Caja registrada correctamente (modo fallback)',
       };
     }
-    
+
     // Re-throw with more context if needed
     if (error instanceof apiClient.ApiClientError) {
       throw error;
     }
-    
+
     throw new apiClient.ApiClientError(
       'Error al registrar la caja',
       'REQUEST_FAILED',
@@ -315,18 +290,18 @@ export const registerBox = async (
  * Alternative method that returns only the data or throws an error
  * Useful for simpler error handling in components
  */
-export const submitBoxRegistration = async (boxData: RegisterBoxRequest): Promise<RegisterBoxResult> => {
+export const submitBoxRegistration = async (
+  boxData: RegisterBoxRequest
+): Promise<RegisterBoxResult> => {
   const response = await registerBox(boxData);
-  
-  console.log('🔍 Analyzing API response in submitBoxRegistration:', response);
-  
+
   if (!response.success || !response.data) {
     throw new apiClient.ApiClientError(
       response.error || 'No se pudo registrar la caja',
       'NO_DATA'
     );
   }
-  
+
   return response.data;
 };
 
@@ -339,7 +314,7 @@ export const processScan = async (
 ): Promise<ApiResponse<ProcessScanResult>> => {
   // Client-side validation
   const validation = validateScannedCode(request.codigo);
-  
+
   if (!validation.isValid) {
     throw new apiClient.ApiClientError(
       validation.errorMessage || 'Código inválido',
@@ -367,20 +342,13 @@ export const processScan = async (
     );
   }
 
-  const shouldUseMockMode = import.meta.env.DEV && (
-    !import.meta.env.VITE_API_URL || 
-    import.meta.env.VITE_API_URL.includes('localhost') ||
-    import.meta.env.VITE_USE_MOCK_API === 'true'
-  );
+  const shouldUseMockMode =
+    import.meta.env.DEV &&
+    (!import.meta.env.VITE_API_URL ||
+      import.meta.env.VITE_API_URL.includes('localhost') ||
+      import.meta.env.VITE_USE_MOCK_API === 'true');
 
   if (shouldUseMockMode) {
-    console.log('🔧 Development Mode: Simulating processScan API call', {
-      codigo: request.codigo,
-      ubicacion: request.ubicacion,
-      tipo,
-      timestamp: new Date().toISOString()
-    });
-
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1200));
 
@@ -394,22 +362,23 @@ export const processScan = async (
         ubicacion: request.ubicacion,
         estado: 'activo',
         timestamp: new Date().toISOString(),
-        operation: tipo === 'BOX' && request.ubicacion === 'PACKING' ? 'register_egg' : 'move',
-        palletCodigo: request.palletCodigo
-      }
+        operation:
+          tipo === 'BOX' && request.ubicacion === 'PACKING'
+            ? 'register_egg'
+            : 'move',
+        palletCodigo: request.palletCodigo,
+      },
     };
 
     return {
       success: true,
       data: mockResponse,
-      message: mockResponse.message
+      message: mockResponse.message,
     };
   }
 
   // Make the API request
   try {
-    console.log('📡 Making real API request to:', `${import.meta.env.VITE_API_URL}/procesar-escaneo`);
-    
     const response = await apiClient.post<ProcessScanResult>(
       '/procesar-escaneo',
       {
@@ -417,19 +386,18 @@ export const processScan = async (
         ubicacion: request.ubicacion,
         tipo,
         palletCodigo: request.palletCodigo,
-        scannedCodes: request.scannedCodes
+        scannedCodes: request.scannedCodes,
       }
     );
 
-    console.log('✅ Process scan response received:', response);
     return response;
   } catch (error) {
     console.error('❌ Process scan request failed:', error);
-    
+
     // In development, if the real API fails, fall back to mock mode
     if (import.meta.env.DEV) {
       console.warn('🔄 Falling back to mock mode due to API failure');
-      
+
       const fallbackResponse: ProcessScanResult = {
         success: true,
         message: `${tipo === 'BOX' ? 'Caja' : 'Pallet'} procesada (fallback)`,
@@ -439,22 +407,22 @@ export const processScan = async (
           ubicacion: request.ubicacion,
           estado: 'activo',
           timestamp: new Date().toISOString(),
-          operation: 'fallback'
-        }
+          operation: 'fallback',
+        },
       };
 
       return {
         success: true,
         data: fallbackResponse,
-        message: fallbackResponse.message
+        message: fallbackResponse.message,
       };
     }
-    
+
     // Re-throw with more context if needed
     if (error instanceof apiClient.ApiClientError) {
       throw error;
     }
-    
+
     throw new apiClient.ApiClientError(
       'Error al procesar el escaneo',
       'REQUEST_FAILED',
@@ -467,18 +435,18 @@ export const processScan = async (
  * Alternative method that returns only the data or throws an error
  * Useful for simpler error handling in components
  */
-export const submitScan = async (scanData: ProcessScanRequest): Promise<ProcessScanResult> => {
+export const submitScan = async (
+  scanData: ProcessScanRequest
+): Promise<ProcessScanResult> => {
   const response = await processScan(scanData);
-  
-  console.log('🔍 Analyzing scan response in submitScan:', response);
-  
+
   if (!response.success || !response.data) {
     throw new apiClient.ApiClientError(
       response.error || 'No se pudo procesar el escaneo',
       'NO_DATA'
     );
   }
-  
+
   return response.data;
 };
 
@@ -486,10 +454,12 @@ export const submitScan = async (scanData: ProcessScanRequest): Promise<ProcessS
  * Creates a new pallet
  * Validates the pallet code before making the request
  */
-export const createPallet = async (codigo: string): Promise<ApiResponse<any>> => {
+export const createPallet = async (
+  codigo: string
+): Promise<ApiResponse<any>> => {
   // Client-side validation
   const validation = validateScannedCode(codigo);
-  
+
   if (!validation.isValid || validation.type !== 'pallet') {
     throw new apiClient.ApiClientError(
       'El código debe ser un código de pallet válido (12 dígitos)',
@@ -499,30 +469,107 @@ export const createPallet = async (codigo: string): Promise<ApiResponse<any>> =>
 
   // Make the API request
   try {
-    console.log('📡 Making API request to:', `${import.meta.env.VITE_API_URL}/createPallet`);
-    console.log('📤 Request payload:', { codigo: codigo.trim() });
-    
-    const response = await apiClient.post<any>(
-      '/createPallet',
-      { codigo: codigo.trim() }
-    );
+    const response = await apiClient.post<any>('/createPallet', {
+      codigo: codigo.trim(),
+    });
 
-    console.log('✅ API Response received:', response);
     return response;
   } catch (error) {
     console.error('❌ API Request failed:', error);
-    
+
     // Re-throw with more context if needed
     if (error instanceof apiClient.ApiClientError) {
       throw error;
     }
-    
+
     throw new apiClient.ApiClientError(
       'Error al crear el pallet',
       'REQUEST_FAILED',
       error
     );
   }
+};
+
+/**
+ * Toggles the status of a pallet between open and closed
+ * Validates the pallet code before making the request
+ */
+export const togglePalletStatus = async (
+  request: TogglePalletStatusRequest
+): Promise<ApiResponse<TogglePalletStatusResult>> => {
+  // Client-side validation
+  const validation = validateScannedCode(request.codigo);
+
+  if (!validation.isValid || validation.type !== 'pallet') {
+    throw new apiClient.ApiClientError(
+      'El código debe ser un código de pallet válido',
+      'VALIDATION_ERROR'
+    );
+  }
+
+  // Make the API request
+  try {
+    const response = await apiClient.post<TogglePalletStatusResult>(
+      '/closePallet',
+      {
+        codigo: request.codigo.trim(),
+      }
+    );
+
+    return response;
+  } catch (error) {
+    console.error('❌ Toggle pallet status request failed:', error);
+
+    // In development, if the real API fails, fall back to mock mode
+    if (import.meta.env.DEV) {
+      console.warn('🔄 Falling back to mock mode due to API failure');
+
+      const mockCurrentStatus = 'abierto';
+      const newStatus = 'cerrado';
+
+      return {
+        success: true,
+        data: {
+          codigo: request.codigo.trim(),
+          estadoAnterior: mockCurrentStatus,
+          estadoNuevo: newStatus,
+          mensaje: `Pallet ${newStatus} exitosamente (fallback)`,
+          fechaActualizacion: new Date().toISOString(),
+        },
+        message: `Estado del pallet actualizado (modo fallback)`,
+      };
+    }
+
+    // Re-throw with more context if needed
+    if (error instanceof apiClient.ApiClientError) {
+      throw error;
+    }
+
+    throw new apiClient.ApiClientError(
+      'Error al cambiar el estado del pallet',
+      'REQUEST_FAILED',
+      error
+    );
+  }
+};
+
+/**
+ * Alternative method that returns only the data or throws an error
+ * Useful for simpler error handling in components
+ */
+export const submitPalletStatusToggle = async (
+  codigo: string
+): Promise<TogglePalletStatusResult> => {
+  const response = await togglePalletStatus({ codigo });
+
+  if (!response.success || !response.data) {
+    throw new apiClient.ApiClientError(
+      response.error || 'No se pudo cambiar el estado del pallet',
+      'NO_DATA'
+    );
+  }
+
+  return response.data;
 };
 
 /**
@@ -537,4 +584,6 @@ export const endpoints = {
   processScan,
   submitScan,
   createPallet,
-} as const; 
+  togglePalletStatus,
+  submitPalletStatusToggle,
+} as const;

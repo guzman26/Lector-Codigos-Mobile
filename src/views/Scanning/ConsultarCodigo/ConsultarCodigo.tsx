@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScannedCodeInfo } from '../../../api/types';
 import { validateScannedCode } from '../../../utils/validators';
+import { submitPalletStatusToggle } from '../../../api/endpoints';
 import './ConsultarCodigo.css';
 import { useNavigate } from 'react-router-dom';
 import { useScannedCodeContext } from '../../../context/ScannedCodeContext';
 
 interface ConsultaResult extends ScannedCodeInfo {
   timestamp: string;
+  palletStatus?: 'abierto' | 'cerrado';
 }
 
 const ConsultarCodigo: React.FC = () => {
@@ -15,6 +17,8 @@ const ConsultarCodigo: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ConsultaResult | null>(null);
   const [recentSearches, setRecentSearches] = useState<ConsultaResult[]>([]);
+  const [toggleLoading, setToggleLoading] = useState(false);
+  const [toggleError, setToggleError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { getCodeInfo, data } = useScannedCodeContext();
@@ -32,14 +36,17 @@ const ConsultarCodigo: React.FC = () => {
 
   // Save recent searches to localStorage
   const saveToHistory = (searchResult: ConsultaResult) => {
-    const updated = [searchResult, ...recentSearches.filter(r => r.codigo !== searchResult.codigo)].slice(0, 5);
+    const updated = [
+      searchResult,
+      ...recentSearches.filter(r => r.codigo !== searchResult.codigo),
+    ].slice(0, 5);
     setRecentSearches(updated);
     localStorage.setItem('consultar-codigo-history', JSON.stringify(updated));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!codigo.trim()) {
       setError('Por favor ingresa un código');
       return;
@@ -54,14 +61,15 @@ const ConsultarCodigo: React.FC = () => {
 
     setLoading(true);
     setError(null);
-    console.log('🔍 Consultando código:', codigo.trim());
     try {
       await getCodeInfo(codigo.trim());
+      console.log('🔍 Data:', data);
       if (data) {
         const resultWithTimestamp: ConsultaResult = {
           ...data,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
+        console.log('🔍 Result with timestamp:', resultWithTimestamp);
         setResult(resultWithTimestamp);
         saveToHistory(resultWithTimestamp);
       } else {
@@ -93,6 +101,34 @@ const ConsultarCodigo: React.FC = () => {
     navigate('/dashboard');
   };
 
+  const handleTogglePalletStatus = async (codigo: string) => {
+    if (!result || result.pkTipo !== 'PALLET') return;
+
+    setToggleLoading(true);
+    setToggleError(null);
+
+    try {
+      const toggleResult = await submitPalletStatusToggle(codigo);
+      
+      // Update the result with the new status
+      setResult(prev => prev ? {
+        ...prev,
+        palletStatus: toggleResult.estadoNuevo,
+        ultimaActualizacion: toggleResult.fechaActualizacion
+      } : null);
+
+      // Show success message briefly
+      setToggleError(`✅ ${toggleResult.mensaje}`);
+      setTimeout(() => setToggleError(null), 3000);
+
+    } catch (err: any) {
+      console.error('Error toggling pallet status:', err);
+      setToggleError(err.message || 'Error al cambiar el estado del pallet');
+    } finally {
+      setToggleLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -118,10 +154,6 @@ const ConsultarCodigo: React.FC = () => {
     }
   };
 
-  const getTypeClass = (tipo: string) => {
-    return tipo === 'caja' ? 'type-box' : 'type-pallet';
-  };
-
   const getStatusClass = (estado: string) => {
     switch (estado.toLowerCase()) {
       case 'activo':
@@ -136,28 +168,50 @@ const ConsultarCodigo: React.FC = () => {
   };
 
   const renderActionButtons = (item: ConsultaResult) => {
-    if (item.tipo === 'caja') {
+    if (item.pkTipo === 'BOX') {
       return (
-        <div className="action-buttons">
-          <button className="btn-action btn-move">
+        <div className='action-buttons'>
+          <button className='btn-modern btn-primary'>
             📦 Mover Caja
           </button>
-          <button className="btn-action btn-details">
+          <button className='btn-modern btn-secondary'>
             ℹ️ Ver Detalles
+          </button>
+          <button className='btn-modern btn-secondary'>
+            🔄 Actualizar
           </button>
         </div>
       );
     } else {
+      const currentStatus = item.palletStatus || 'cerrado';
+      const isOpen = currentStatus === 'abierto';
+      
       return (
-        <div className="action-buttons">
-          <button className="btn-action btn-move">
+        <div className='action-buttons'>
+          <button className='btn-modern btn-primary'>
             🚛 Mover Pallet
           </button>
-          <button className="btn-action btn-contents">
+          <button className='btn-modern btn-secondary'>
             📋 Ver Contenido
           </button>
-          <button className="btn-action btn-details">
-            ℹ️ Ver Detalles
+          <button 
+            className={`btn-modern ${isOpen ? 'btn-danger' : 'btn-success'}`}
+            onClick={() => handleTogglePalletStatus(item.codigo)}
+            disabled={toggleLoading}
+          >
+            {toggleLoading ? (
+              <>
+                <div className='spinner-small'></div>
+                Cambiando...
+              </>
+            ) : isOpen ? (
+              '🔒 Cerrar Pallet'
+            ) : (
+              '🔓 Abrir Pallet'
+            )}
+          </button>
+          <button className='btn-modern btn-secondary'>
+            🔄 Actualizar
           </button>
         </div>
       );
@@ -165,125 +219,169 @@ const ConsultarCodigo: React.FC = () => {
   };
 
   return (
-    <div className="consultar-codigo">
-      <div className="header">
-        <button onClick={handleBack} className="back-btn">
+    <div className='consultar-codigo'>
+      {/* Header */}
+      <div className='header'>
+        <button onClick={handleBack} className='back-btn'>
           ← Volver
         </button>
-        <h2>🔍 Consultar Código</h2>
-        <p>Ingresa un código para consultar su información</p>
+        <div className='header-content'>
+          <div className='header-icon'>
+            🔍
+          </div>
+          <h1>Consultar Código</h1>
+          <p>Ingresa un código para consultar información detallada</p>
+        </div>
       </div>
 
-      {/* Search Form */}
-      <form onSubmit={handleSubmit} className="search-form">
-        <div className="input-group">
-          <input
-            ref={inputRef}
-            type="text"
-            value={codigo}
-            onChange={(e) => setCodigo(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Escanea o ingresa el código (12 o 15 dígitos)"
-            className="code-input"
-            disabled={loading}
-            autoFocus
-          />
-          <button 
-            type="submit" 
-            className="search-button"
-            disabled={loading || !codigo.trim()}
-          >
-            {loading ? '🔄' : '🔍'}
-          </button>
-        </div>
-        
-        {error && (
-          <div className="error-message">
-            ⚠️ {error}
+      {/* Search Section */}
+      <div className='search-section'>
+        <form onSubmit={handleSubmit} className='search-form'>
+          <div className='search-container'>
+            <div className='input-wrapper'>
+              <span className='search-icon'>🔍</span>
+              <input
+                ref={inputRef}
+                type='text'
+                value={codigo}
+                onChange={e => setCodigo(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder='Escanea o ingresa el código (12 o 15 dígitos)'
+                className='search-input'
+                disabled={loading}
+                autoFocus
+              />
+              {codigo && (
+                <button 
+                  type="button" 
+                  className='clear-btn'
+                  onClick={() => setCodigo('')}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <button
+              type='submit'
+              className='search-button'
+              disabled={loading || !codigo.trim()}
+            >
+              {loading ? (
+                <div className='spinner'></div>
+              ) : (
+                <>
+                  🔍 Buscar
+                </>
+              )}
+            </button>
           </div>
-        )}
-      </form>
+          {error && (
+            <div className='error-message'>
+              ⚠️ {error}
+            </div>
+          )}
+        </form>
+      </div>
 
       {/* Search Result */}
       {result && (
-        <div className="result-container">
-          <div className="result-header">
-            <h3>📋 Información del Código</h3>
-            <small>Consultado {formatDate(result.timestamp)}</small>
-          </div>
-
-          <div className="result-content">
-            {/* Code Display */}
-            <div className="code-display">
-              <div className="code-value">{result.codigo}</div>
-              <div className="code-badges">
-                <span className={`badge ${getTypeClass(result.tipo)}`}>
-                  {result.tipo === 'caja' ? '📦 Caja' : '🚛 Pallet'}
+        <div className='result-section'>
+          {/* Code Header Card */}
+          <div className='code-card'>
+            <div className='code-header'>
+              <div className='code-info'>
+                <h2 className='code-value'>{result.codigo}</h2>
+                <span className='code-timestamp'>
+                  🕒 Consultado {formatDate(result.timestamp)}
                 </span>
-                <span className={`badge ${getStatusClass(result.estado)}`}>
+              </div>
+              <div className='code-badges'>
+                <span className={`badge badge-type ${result.pkTipo === 'BOX' ? 'badge-box' : 'badge-pallet'}`}>
+                  {result.pkTipo === 'BOX' ? '📦 Caja' : '🚛 Pallet'}
+                </span>
+                <span className={`badge badge-status ${getStatusClass(result.estado)}`}>
                   {result.estado}
                 </span>
+                {result.pkTipo === 'PALLET' && (
+                  <span className={`badge badge-pallet-status ${result.palletStatus === 'abierto' ? 'badge-open' : 'badge-closed'}`}>
+                    {result.palletStatus === 'abierto' ? '🔓 Abierto' : '🔒 Cerrado'}
+                  </span>
+                )}
               </div>
             </div>
 
+            {/* Quick Info Tags */}
+            <div className='quick-tags'>
+              <span className='tag'>
+                👤 Operario: {result.operario || 'N/A'}
+              </span>
+              <span className='tag'>
+                🏭 Empacadora: {result.empacadora || 'N/A'}
+              </span>
+              <span className='tag'>
+                📦 Formato: {result.formato_caja || 'N/A'}
+              </span>
+            </div>
+          </div>
+
+          {/* Toggle Message */}
+          {toggleError && (
+            <div className={`alert ${toggleError.startsWith('✅') ? 'alert-success' : 'alert-error'}`}>
+              <div className='alert-content'>
+                {toggleError}
+              </div>
+            </div>
+          )}
+
+          {/* Information Grid */}
+          <div className='info-grid'>
             {/* Product Information */}
             {result.producto && (
-              <div className="info-section">
-                <h4>📋 Información del Producto</h4>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <label>ID:</label>
-                    <span>{result.producto.id}</span>
-                  </div>
-                  <div className="info-item">
-                    <label>Nombre:</label>
-                    <span>{result.producto.nombre}</span>
-                  </div>
-                  <div className="info-item full-width">
-                    <label>Descripción:</label>
-                    <span>{result.producto.descripcion}</span>
-                  </div>
+              <div className='info-card'>
+                <div className='info-header'>
+                  <span>📋</span>
+                  <h3>Información del Producto</h3>
                 </div>
-              </div>
-            )}
-
-            {/* Location Information */}
-            {result.ubicacion && (
-              <div className="info-section">
-                <h4>📍 Ubicación</h4>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <label>Almacén:</label>
-                    <span>{result.ubicacion.almacen}</span>
+                <div className='info-content'>
+                  <div className='info-row'>
+                    <span className='label'>ID:</span>
+                    <span className='value'>{result.producto.id}</span>
                   </div>
-                  <div className="info-item">
-                    <label>Zona:</label>
-                    <span>{result.ubicacion.zona}</span>
+                  <div className='info-row'>
+                    <span className='label'>Nombre:</span>
+                    <span className='value'>{result.producto.nombre}</span>
                   </div>
-                  <div className="info-item">
-                    <label>Posición:</label>
-                    <span>{result.ubicacion.posicion}</span>
-                  </div>
+                  {result.producto.descripcion && (
+                    <div className='info-row full-width'>
+                      <span className='label'>Descripción:</span>
+                      <span className='value'>{result.producto.descripcion}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Tracking Information */}
-            <div className="info-section">
-              <h4>📅 Seguimiento</h4>
-              <div className="info-grid">
-                <div className="info-item">
-                  <label>Creado:</label>
-                  <span>{formatDate(result.fechaCreacion)}</span>
+            <div className='info-card'>
+              <div className='info-header'>
+                <span>📅</span>
+                <h3>Seguimiento</h3>
+              </div>
+              <div className='info-content'>
+                <div className='info-row'>
+                  <span className='label'>Creado:</span>
+                  <span className='value'>{formatDate(result.fecha_registro)}</span>
                 </div>
-                <div className="info-item">
-                  <label>Actualizado:</label>
-                  <span>{formatDate(result.ultimaActualizacion)}</span>
+                <div className='info-row'>
+                  <span className='label'>Actualizado:</span>
+                  <span className='value'>{formatDate(result.scannedAt)}</span>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Action Buttons */}
+          {/* Action Buttons */}
+          <div className='actions-section'>
             {renderActionButtons(result)}
           </div>
         </div>
@@ -291,24 +389,27 @@ const ConsultarCodigo: React.FC = () => {
 
       {/* Recent Searches */}
       {recentSearches.length > 0 && (
-        <div className="recent-searches">
-          <h3>📝 Búsquedas Recientes</h3>
-          <div className="recent-list">
+        <div className='recent-section'>
+          <div className='section-header'>
+            <span>📝</span>
+            <h3>Búsquedas Recientes</h3>
+          </div>
+          <div className='recent-grid'>
             {recentSearches.map((item, index) => (
-              <div 
+              <div
                 key={`${item.codigo}-${index}`}
-                className="recent-item"
+                className='recent-card'
                 onClick={() => handleQuickSearch(item)}
               >
-                <div className="recent-code">
-                  <span className="code">{item.codigo}</span>
-                  <span className={`badge ${getTypeClass(item.tipo)}`}>
-                    {item.tipo === 'caja' ? '📦' : '🚛'}
+                <div className='recent-header'>
+                  <span className='recent-code'>{item.codigo}</span>
+                  <span className={`recent-badge ${item.pkTipo === 'BOX' ? 'badge-box' : 'badge-pallet'}`}>
+                    {item.pkTipo === 'BOX' ? '📦' : '🚛'}
                   </span>
                 </div>
-                <div className="recent-info">
-                  <div className="product-name">{item.producto?.nombre || 'Producto sin nombre'}</div>
-                  <div className="search-time">{formatDate(item.timestamp)}</div>
+                <div className='recent-info'>
+                  <p className='recent-product'>{item.producto?.nombre || 'Producto sin nombre'}</p>
+                  <span className='recent-time'>{formatDate(item.timestamp)}</span>
                 </div>
               </div>
             ))}
@@ -320,3 +421,5 @@ const ConsultarCodigo: React.FC = () => {
 };
 
 export default ConsultarCodigo;
+
+

@@ -32,6 +32,7 @@ REACT_APP_API_BASE_URL=http://localhost:3000/api
 ### Tipos de Respuesta
 
 El endpoint espera códigos válidos:
+
 - **Código de Caja**: 15 dígitos (ej: `123456789012345`)
 - **Código de Pallet**: 12 dígitos (ej: `123456789012`)
 
@@ -53,24 +54,30 @@ const MyComponent = () => {
 
   return (
     <div>
-      <input 
-        value={code} 
-        onChange={(e) => setCode(e.target.value)}
-        placeholder="Ingrese código de 12 o 15 dígitos"
+      <input
+        value={code}
+        onChange={e => setCode(e.target.value)}
+        placeholder='Ingrese código de 12 o 15 dígitos'
       />
       <button onClick={handleScan} disabled={loading}>
         {loading ? 'Procesando...' : 'Escanear'}
       </button>
-      
-      {error && <div className="error">{error}</div>}
-      
+
+      {error && <div className='error'>{error}</div>}
+
       {data && (
         <div>
           <h3>Información del Código</h3>
-          <p><strong>Tipo:</strong> {data.tipo}</p>
-          <p><strong>Estado:</strong> {data.estado}</p>
+          <p>
+            <strong>Tipo:</strong> {data.tipo}
+          </p>
+          <p>
+            <strong>Estado:</strong> {data.estado}
+          </p>
           {data.producto && (
-            <p><strong>Producto:</strong> {data.producto.nombre}</p>
+            <p>
+              <strong>Producto:</strong> {data.producto.nombre}
+            </p>
           )}
         </div>
       )}
@@ -166,15 +173,19 @@ console.log(clean); // "123456789012345"
 import { apiClient } from '../api';
 
 // Request con configuración personalizada
-const customRequest = await apiClient.get('/customEndpoint', {
-  param1: 'value1'
-}, {
-  timeout: 15000,  // 15 segundos
-  retries: 5,      // 5 reintentos
-  headers: {
-    'Authorization': 'Bearer token'
+const customRequest = await apiClient.get(
+  '/customEndpoint',
+  {
+    param1: 'value1',
+  },
+  {
+    timeout: 15000, // 15 segundos
+    retries: 5, // 5 reintentos
+    headers: {
+      Authorization: 'Bearer token',
+    },
   }
-});
+);
 ```
 
 ### Manejo de Errores
@@ -197,7 +208,7 @@ try {
         // Código no encontrado
         break;
       default:
-        // Otros errores
+      // Otros errores
     }
   }
 }
@@ -231,6 +242,7 @@ interface ScannedCodeInfo {
 ## 🎯 Mejores Prácticas
 
 ### 1. Usar TypeScript
+
 Siempre importa y usa los tipos definidos:
 
 ```tsx
@@ -240,6 +252,7 @@ const [data, setData] = useState<ScannedCodeInfo | null>(null);
 ```
 
 ### 2. Manejo de Loading States
+
 Siempre maneja los estados de carga:
 
 ```tsx
@@ -253,6 +266,7 @@ return (
 ```
 
 ### 3. Validación del Cliente
+
 Valida antes de enviar requests:
 
 ```tsx
@@ -266,6 +280,7 @@ if (!isValid) {
 ```
 
 ### 4. Reset de Estados
+
 Resetea estados cuando sea necesario:
 
 ```tsx
@@ -282,6 +297,7 @@ const handleClear = () => {
 ### Agregar Nuevos Endpoints
 
 1. **Tipos** (`src/api/types.ts`):
+
 ```typescript
 export interface NewEndpointRequest {
   param: string;
@@ -293,6 +309,7 @@ export interface NewEndpointResponse {
 ```
 
 2. **Endpoint** (`src/api/endpoints.ts`):
+
 ```typescript
 export const newEndpoint = async (
   request: NewEndpointRequest
@@ -302,6 +319,7 @@ export const newEndpoint = async (
 ```
 
 3. **Hook** (`src/api/hooks/useNewEndpoint.ts`):
+
 ```typescript
 export const useNewEndpoint = () => {
   // Implementar lógica similar
@@ -309,8 +327,60 @@ export const useNewEndpoint = () => {
 ```
 
 4. **Exportar** (`src/api/index.ts`):
+
 ```typescript
 export { newEndpoint, useNewEndpoint } from './endpoints';
 ```
 
-Esta estructura garantiza código limpio, mantenible y escalable siguiendo principios de clean code. 
+Esta estructura garantiza código limpio, mantenible y escalable siguiendo principios de clean code.
+
+## Toggle Pallet Status
+
+### `togglePalletStatus(request)`
+
+Toggles the status of a pallet between open and closed states.
+
+**Parameters:**
+- `request`: `TogglePalletStatusRequest`
+  - `codigo`: The pallet code to toggle status for
+
+**Returns:** `Promise<ApiResponse<TogglePalletStatusResult>>`
+
+**Example:**
+```typescript
+import { togglePalletStatus } from '@/api/endpoints';
+
+try {
+  const response = await togglePalletStatus({
+    codigo: 'PLA-AX-230610-001'
+  });
+  
+  if (response.success && response.data) {
+    console.log(`Pallet status changed from ${response.data.estadoAnterior} to ${response.data.estadoNuevo}`);
+    console.log(response.data.mensaje);
+  }
+} catch (error) {
+  console.error('Error toggling pallet status:', error.message);
+}
+```
+
+### `submitPalletStatusToggle(codigo)`
+
+Simplified version that returns only the data or throws an error.
+
+**Parameters:**
+- `codigo`: The pallet code string
+
+**Returns:** `Promise<TogglePalletStatusResult>`
+
+**Example:**
+```typescript
+import { submitPalletStatusToggle } from '@/api/endpoints';
+
+try {
+  const result = await submitPalletStatusToggle('PLA-AX-230610-001');
+  console.log(`Pallet ${result.codigo} is now ${result.estadoNuevo}`);
+} catch (error) {
+  console.error('Failed to toggle pallet status:', error.message);
+}
+```

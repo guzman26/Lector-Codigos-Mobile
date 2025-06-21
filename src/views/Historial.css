@@ -401,22 +401,22 @@
   .history-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .filters-section {
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;
   }
-  
+
   .search-group {
     flex: 1;
     max-width: 400px;
   }
-  
+
   .filter-group {
     flex-shrink: 0;
   }
-  
+
   .clear-history-btn {
     flex-shrink: 0;
   }
@@ -433,57 +433,57 @@
     padding: 0.5rem;
     gap: 1rem;
   }
-  
+
   .filters-section {
     padding: 1rem;
   }
-  
+
   .filter-group {
     flex-direction: column;
   }
-  
+
   .current-scan-banner {
     padding: 1rem;
     flex-direction: column;
     text-align: center;
     gap: 0.75rem;
   }
-  
+
   .current-scan-info {
     justify-content: center;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
     padding: 1rem;
   }
-  
+
   .card-body {
     padding: 1rem;
   }
-  
+
   .card-field {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
   }
-  
+
   .field-value {
     text-align: left;
   }
-  
+
   .card-footer {
     flex-direction: column;
     gap: 0.75rem;
     padding: 1rem;
   }
-  
+
   .stats-footer {
     padding: 1rem;
   }
-  
+
   .stat-number {
     font-size: 1.25rem;
   }
@@ -597,66 +597,66 @@
   .historial-title {
     color: var(--text-primary);
   }
-  
+
   .historial-subtitle {
     color: var(--text-secondary);
   }
-  
+
   .filters-section,
   .history-card,
   .stats-footer {
     background-color: var(--background-white);
     border-color: var(--border-light);
   }
-  
+
   .search-input,
   .filter-select {
     background-color: #0d1117;
     border-color: #30363d;
     color: #e6edf3;
   }
-  
+
   .search-input:focus,
   .filter-select:focus {
     border-color: #2f81f7;
     box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.1);
   }
-  
+
   .card-header,
   .card-footer {
     background-color: #262c36;
     border-color: #30363d;
   }
-  
+
   .code-text,
   .field-value {
     color: #e6edf3;
   }
-  
+
   .field-label,
   .scan-date {
     color: #8b949e;
   }
-  
+
   .results-info {
     background-color: #262c36;
     border-color: #30363d;
     color: #8b949e;
   }
-  
+
   .empty-state h3 {
     color: #e6edf3;
   }
-  
+
   .empty-state p {
     color: #8b949e;
   }
-  
+
   .stat-number {
     color: #2f81f7;
   }
-  
+
   .stat-label {
     color: #8b949e;
   }
-} 
+}

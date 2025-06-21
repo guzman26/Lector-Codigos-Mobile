@@ -238,8 +238,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
@@ -247,22 +251,22 @@
     margin: 16px;
     padding: 20px;
   }
-  
+
   .form-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .form-buttons {
     flex-direction: column;
   }
-  
+
   .preview-code {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .code-display {
     font-size: 20px;
   }
-} 
+}

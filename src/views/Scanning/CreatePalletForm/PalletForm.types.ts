@@ -60,7 +60,9 @@ export interface CreatePalletFormProps {
  * Return type for the usePalletForm hook
  */
 export interface UsePalletFormReturn extends PalletFormState {
-  handleInputChange: (event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => void;
+  handleInputChange: (
+    event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+  ) => void;
   handleToggleManualCode: () => void;
   handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   resetForm: () => void;
@@ -73,4 +75,4 @@ export interface PalletCodeParams {
   turno: string;
   calibre: string;
   formato: string;
-} 
+}

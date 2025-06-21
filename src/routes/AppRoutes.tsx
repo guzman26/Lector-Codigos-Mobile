@@ -1,5 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
 import Layout from '../components/Layout';
 import Dashboard from '../views/Dashboard';
 import Configuracion from '../views/Configuracion';
@@ -14,35 +19,35 @@ const AppRoutes: React.FC = () => {
       <Layout>
         <Routes>
           {/* Default route redirects to dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          
+          <Route path='/' element={<Navigate to='/dashboard' replace />} />
+
           {/* Dashboard route */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          
+          <Route path='/dashboard' element={<Dashboard />} />
+
           {/* Configuration route */}
-          <Route path="/configuracion" element={<Configuracion />} />
-          
+          <Route path='/configuracion' element={<Configuracion />} />
+
           {/* History route */}
-          <Route path="/historial" element={<Historial />} />
-          
+          <Route path='/historial' element={<Historial />} />
+
           {/* Register new box route */}
-          <Route path="/registrar-caja" element={<RegistrarCaja />} />
+          <Route path='/registrar-caja' element={<RegistrarCaja />} />
 
           {/* Consultar código route */}
-          <Route path="/consultar-codigo" element={<ConsultarCodigo />} />
+          <Route path='/consultar-codigo' element={<ConsultarCodigo />} />
 
           {/* Crear pallet route */}
-          <Route path="/crear-pallet" element={<CrearPallet />} />
-          
+          <Route path='/crear-pallet' element={<CrearPallet />} />
+
           {/* Future routes can be added here */}
           {/* <Route path="/scanner" element={<Scanner />} /> */}
-          
+
           {/* Catch all route - redirect to dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path='*' element={<Navigate to='/dashboard' replace />} />
         </Routes>
       </Layout>
     </Router>
   );
 };
 
-export default AppRoutes; 
+export default AppRoutes;

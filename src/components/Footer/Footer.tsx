@@ -19,20 +19,20 @@ const Footer: React.FC<FooterProps> = ({ tabs, onTabClick }) => {
   };
 
   return (
-    <footer className="footer">
-      <nav className="footer-nav">
-        {tabs.map((tab) => (
+    <footer className='footer'>
+      <nav className='footer-nav'>
+        {tabs.map(tab => (
           <button
             key={tab.id}
             className={`nav-tab ${tab.isActive ? 'active' : ''}`}
             onClick={() => handleTabClick(tab.id)}
-            type="button"
+            type='button'
             aria-label={tab.label}
           >
-            <span className="nav-icon" aria-hidden="true">
+            <span className='nav-icon' aria-hidden='true'>
               {tab.icon}
             </span>
-            <span className="nav-label">{tab.label}</span>
+            <span className='nav-label'>{tab.label}</span>
           </button>
         ))}
       </nav>
@@ -40,4 +40,4 @@ const Footer: React.FC<FooterProps> = ({ tabs, onTabClick }) => {
   );
 };
 
-export default Footer; 
+export default Footer;

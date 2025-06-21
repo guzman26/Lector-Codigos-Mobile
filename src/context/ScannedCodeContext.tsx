@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { getInfoFromScannedCode, ApiClientError } from '../api';
 import type { ScannedCodeInfo } from '../api/types';
 
@@ -12,13 +18,17 @@ interface ScannedCodeContextType {
   clearHistory: () => void;
 }
 
-const ScannedCodeContext = createContext<ScannedCodeContextType | undefined>(undefined);
+const ScannedCodeContext = createContext<ScannedCodeContextType | undefined>(
+  undefined
+);
 
 interface ScannedCodeProviderProps {
   children: ReactNode;
 }
 
-export const ScannedCodeProvider: React.FC<ScannedCodeProviderProps> = ({ children }) => {
+export const ScannedCodeProvider: React.FC<ScannedCodeProviderProps> = ({
+  children,
+}) => {
   const [data, setData] = useState<ScannedCodeInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +51,12 @@ export const ScannedCodeProvider: React.FC<ScannedCodeProviderProps> = ({ childr
         setError('No se encontró información para este código');
         setData(null);
       }
-      
-      
-      
     } catch (error) {
-      const errorMessage = error instanceof ApiClientError 
-        ? error.message 
-        : 'Error desconocido al obtener información del código';
-      
+      const errorMessage =
+        error instanceof ApiClientError
+          ? error.message
+          : 'Error desconocido al obtener información del código';
+
       setError(errorMessage);
       setData(null);
     } finally {
@@ -86,7 +94,9 @@ export const ScannedCodeProvider: React.FC<ScannedCodeProviderProps> = ({ childr
 export const useScannedCodeContext = (): ScannedCodeContextType => {
   const context = useContext(ScannedCodeContext);
   if (!context) {
-    throw new Error('useScannedCodeContext must be used within ScannedCodeProvider');
+    throw new Error(
+      'useScannedCodeContext must be used within ScannedCodeProvider'
+    );
   }
   return context;
-}; 
+};

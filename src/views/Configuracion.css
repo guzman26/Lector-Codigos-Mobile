@@ -142,16 +142,16 @@
   .config-section {
     padding: 1.5rem;
   }
-  
+
   .config-title {
     font-size: 1.25rem;
     margin-bottom: 1.5rem;
   }
-  
+
   .group-title {
     font-size: 1rem;
   }
-  
+
   .config-actions {
     gap: 0.75rem;
   }
@@ -161,21 +161,21 @@
   .config-section {
     padding: 1rem;
   }
-  
+
   .config-title {
     font-size: 1.125rem;
   }
-  
+
   .config-item {
     margin-bottom: 1rem;
   }
-  
+
   .config-input,
   .config-select {
     padding: 0.75rem;
     min-height: 48px;
   }
-  
+
   .config-btn {
     padding: 0.875rem 1.25rem;
     min-height: 52px;
@@ -245,24 +245,24 @@
   .theme-toggle-container {
     gap: 0.75rem;
   }
-  
+
   .theme-label {
     font-size: 0.8rem;
     min-width: 70px;
   }
-  
+
   .theme-toggle {
     width: 52px;
     height: 18px;
     border-radius: 14px;
   }
-  
+
   .theme-toggle-thumb {
     width: 24px;
     height: 24px;
   }
-  
+
   .theme-toggle.active .theme-toggle-thumb {
     transform: translateX(24px);
   }
-} 
+}
