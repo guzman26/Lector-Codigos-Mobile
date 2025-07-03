@@ -73,7 +73,6 @@ export const validateBoxCodeDetailed = (code: string): {
   // Basic range validations
   const diaNum = parseInt(dia);
   const semanaNum = parseInt(semana);
-  const añoNum = parseInt(año);
 
   if (diaNum < 1 || diaNum > 7) {
     return {
