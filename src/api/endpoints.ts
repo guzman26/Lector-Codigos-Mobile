@@ -15,6 +15,8 @@ import type {
   TogglePalletStatusRequest,
   TogglePalletStatusResult,
   ApiResponse,
+  MovePalletRequest,
+  MovePalletResult,
 } from './types';
 
 /**
@@ -463,7 +465,7 @@ export const createPallet = async (
 
   if (!validation.isValid || validation.type !== 'pallet') {
     throw new apiClient.ApiClientError(
-      'El código debe ser un código de pallet válido (12 dígitos)',
+      'El código debe ser un código de pallet válido (13 dígitos)',
       'VALIDATION_ERROR'
     );
   }
@@ -574,6 +576,121 @@ export const submitPalletStatusToggle = async (
 };
 
 /**
+ * Move a pallet and all its boxes to a new location
+ */
+export const movePallet = async (
+  request: MovePalletRequest
+): Promise<ApiResponse<MovePalletResult>> => {
+  // Client-side validation
+  const validation = validateScannedCode(request.codigo);
+
+  if (!validation.isValid || validation.type !== 'pallet') {
+    throw new apiClient.ApiClientError(
+      'El código debe ser un código de pallet válido (13 dígitos)',
+      'VALIDATION_ERROR'
+    );
+  }
+
+  const validLocations = ['PACKING', 'TRANSITO', 'BODEGA', 'PREVENTA', 'VENTA'];
+  if (!validLocations.includes(request.ubicacion)) {
+    throw new apiClient.ApiClientError(
+      'Ubicación inválida. Debe ser una de: PACKING, TRANSITO, BODEGA, PREVENTA, VENTA',
+      'VALIDATION_ERROR'
+    );
+  }
+
+  const shouldUseMockMode =
+    import.meta.env.DEV &&
+    (!import.meta.env.VITE_API_URL ||
+      import.meta.env.VITE_API_URL.includes('localhost') ||
+      import.meta.env.VITE_USE_MOCK_API === 'true');
+
+  if (shouldUseMockMode) {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    const mockResponse: MovePalletResult = {
+      success: true,
+      message: `Pallet movido exitosamente a ${request.ubicacion}`,
+      data: {
+        codigo: request.codigo.trim(),
+        ubicacion: request.ubicacion,
+        estado: 'activo',
+        timestamp: new Date().toISOString(),
+      },
+    };
+
+    return {
+      success: true,
+      data: mockResponse,
+      message: mockResponse.message,
+    };
+  }
+
+  // Real API call
+  try {
+    const response = await apiClient.post<MovePalletResult>('/movePallet', {
+      codigo: request.codigo.trim(),
+      ubicacion: request.ubicacion,
+    });
+
+    return response;
+  } catch (error) {
+    console.error('❌ Move pallet request failed:', error);
+
+    if (import.meta.env.DEV) {
+      console.warn('🔄 Falling back to mock mode due to API failure');
+
+      const fallback: MovePalletResult = {
+        success: true,
+        message: `Pallet movido (fallback)`,
+        data: {
+          codigo: request.codigo.trim(),
+          ubicacion: request.ubicacion,
+          estado: 'activo',
+          timestamp: new Date().toISOString(),
+        },
+      };
+
+      return {
+        success: true,
+        data: fallback,
+        message: fallback.message,
+      };
+    }
+
+    if (error instanceof apiClient.ApiClientError) {
+      throw error;
+    }
+
+    throw new apiClient.ApiClientError(
+      'Error al mover el pallet',
+      'REQUEST_FAILED',
+      error
+    );
+  }
+};
+
+/**
+ * Wrapper that returns only the MovePalletResult or throws an error
+ */
+export const submitMovePallet = async (
+  codigo: string,
+  ubicacion: string = 'TRANSITO'
+): Promise<MovePalletResult> => {
+  const response = await movePallet({ codigo, ubicacion });
+
+  if (!response.success || !response.data) {
+    throw new apiClient.ApiClientError(
+      response.error || 'No se pudo mover el pallet',
+      'NO_DATA'
+    );
+  }
+
+  return response.data;
+};
+
+/**
  * API endpoints object for easy access
  */
 export const endpoints = {
@@ -587,4 +704,6 @@ export const endpoints = {
   createPallet,
   togglePalletStatus,
   submitPalletStatusToggle,
+  movePallet,
+  submitMovePallet,
 } as const;

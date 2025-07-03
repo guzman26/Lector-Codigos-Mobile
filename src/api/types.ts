@@ -160,3 +160,26 @@ export interface TogglePalletStatusResult {
   mensaje: string;
   fechaActualizacion: string;
 }
+
+/**
+ * Move Pallet Request
+ */
+export interface MovePalletRequest {
+  codigo: string; // 13-digit pallet code
+  ubicacion: string; // Nueva ubicación (ej. TRANSITO)
+}
+
+/**
+ * Move Pallet Response
+ */
+export interface MovePalletResult {
+  success: boolean;
+  message: string;
+  data?: {
+    codigo: string;
+    ubicacion: string;
+    estado: string;
+    timestamp: string;
+    [key: string]: any;
+  };
+}

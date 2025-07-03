@@ -27,6 +27,8 @@ export {
   submitBoxRegistration,
   processScan,
   submitScan,
+  movePallet,
+  submitMovePallet,
 } from './endpoints';
 
 // Utilities (re-export for convenience)

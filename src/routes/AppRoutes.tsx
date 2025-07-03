@@ -13,6 +13,8 @@ import RegistrarCaja from '../views/Scanning/RegistrarCajaNueva/RegistrarCaja';
 import ConsultarCodigo from '../views/Scanning/ConsultarCodigo/ConsultarCodigo';
 import CrearPallet from '../views/Scanning/CreatePalletForm/CreatePalletForm';
 import CreateCustomBox from '../views/Scanning/CreateCustomBox/CreateCustomBox';
+import SendPalletToTransit from '../views/Scanning/SendPalletToTransit/SendPalletToTransit';
+
 
 const AppRoutes: React.FC = () => {
   return (
@@ -42,6 +44,9 @@ const AppRoutes: React.FC = () => {
 
           {/* Crear caja custom route */}
           <Route path='/crear-caja-custom' element={<CreateCustomBox />} />
+
+          {/* Enviar pallet a TRANSITO */}
+          <Route path='/enviar-pallet-transito' element={<SendPalletToTransit />} />
 
           {/* Future routes can be added here */}
           {/* <Route path="/scanner" element={<Scanner />} /> */}

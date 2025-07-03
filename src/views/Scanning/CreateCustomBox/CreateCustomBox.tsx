@@ -43,7 +43,7 @@ export const CreateCustomBox: React.FC<CreateCustomBoxProps> = ({
     if (palletCodigo) {
       const palletValidation = validateScannedCode(palletCodigo);
       if (!palletValidation.isValid || palletValidation.type !== 'pallet') {
-        newErrors.palletCodigo = 'Código de pallet inválido (debe tener 12 dígitos)';
+        newErrors.palletCodigo = 'Código de pallet inválido (debe tener 13 dígitos)';
       }
     }
 
@@ -157,8 +157,8 @@ export const CreateCustomBox: React.FC<CreateCustomBoxProps> = ({
             id="mainBoxCode"
             value={mainBoxCode}
             onChange={(e) => setMainBoxCode(e.target.value)}
-            placeholder="Ingrese código de 15 dígitos"
-            maxLength={15}
+            placeholder="Ingrese código de 16 dígitos (DSSAA-OOET-CCFC-CCC)"
+            maxLength={16}
             className={errors.mainBoxCode ? 'error' : ''}
             disabled={isLoading}
           />
@@ -192,8 +192,8 @@ export const CreateCustomBox: React.FC<CreateCustomBoxProps> = ({
             id="palletCodigo"
             value={palletCodigo}
             onChange={(e) => setPalletCodigo(e.target.value)}
-            placeholder="Ingrese código de 12 dígitos"
-            maxLength={12}
+            placeholder="Ingrese código de 13 dígitos (DSSAA-HCCF-E-CCC)"
+            maxLength={13}
             className={errors.palletCodigo ? 'error' : ''}
             disabled={isLoading}
           />
@@ -226,8 +226,8 @@ export const CreateCustomBox: React.FC<CreateCustomBoxProps> = ({
                     id={`boxCode_${index}`}
                     value={entry.boxCode}
                     onChange={(e) => updateCustomEntry(index, 'boxCode', e.target.value)}
-                    placeholder="Código de 15 dígitos"
-                    maxLength={15}
+                    placeholder="Código de 16 dígitos"
+                    maxLength={16}
                     className={errors[`customEntry_${index}_code`] ? 'error' : ''}
                     disabled={isLoading}
                   />

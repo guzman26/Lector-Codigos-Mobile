@@ -1,7 +1,9 @@
 import type { CodeValidationResult } from '../api/types';
 
 /**
- * Validates if a code is a valid box code (15 digits)
+ * Validates if a code is a valid box code (16 digits)
+ * Format: D-SS-AA-OO-E-T-CC-F-C-CCC
+ * D=Día, SS=Semana, AA=Año, OO=Operario, E=Empacadora, T=Turno, CC=Calibre, F=Formato, C=Empresa, CCC=Contador
  */
 export const isValidBoxCode = (code: string): boolean => {
   if (!code || typeof code !== 'string') return false;
@@ -9,12 +11,198 @@ export const isValidBoxCode = (code: string): boolean => {
   // Remove any whitespace
   const cleanCode = code.trim();
 
-  // Check if it's exactly 15 digits
-  return /^\d{15}$/.test(cleanCode);
+  // Check if it's exactly 16 digits
+  return /^\d{16}$/.test(cleanCode);
 };
 
 /**
- * Validates if a code is a valid pallet code (12 digits)
+ * Detailed validation for box code with component analysis
+ * Returns specific validation results for each component
+ */
+export const validateBoxCodeDetailed = (code: string): {
+  isValid: boolean;
+  errorMessage?: string;
+  components?: {
+    dia: string;
+    semana: string;
+    año: string;
+    operario: string;
+    empacadora: string;
+    turno: string;
+    calibre: string;
+    formato: string;
+    empresa: string;
+    contador: string;
+  };
+} => {
+  if (!code || typeof code !== 'string') {
+    return {
+      isValid: false,
+      errorMessage: 'El código es requerido',
+    };
+  }
+
+  const cleanCode = code.trim();
+
+  if (cleanCode.length !== 16) {
+    return {
+      isValid: false,
+      errorMessage: `El código debe tener exactamente 16 dígitos (actual: ${cleanCode.length})`,
+    };
+  }
+
+  if (!/^\d{16}$/.test(cleanCode)) {
+    return {
+      isValid: false,
+      errorMessage: 'El código debe contener solo números',
+    };
+  }
+
+  // Parse components
+  const dia = cleanCode.substr(0, 1);
+  const semana = cleanCode.substr(1, 2);
+  const año = cleanCode.substr(3, 2);
+  const operario = cleanCode.substr(5, 2);
+  const empacadora = cleanCode.substr(7, 1);
+  const turno = cleanCode.substr(8, 1);
+  const calibre = cleanCode.substr(9, 2);
+  const formato = cleanCode.substr(11, 1);
+  const empresa = cleanCode.substr(12, 1);
+  const contador = cleanCode.substr(13, 3);
+
+  // Basic range validations
+  const diaNum = parseInt(dia);
+  const semanaNum = parseInt(semana);
+  const añoNum = parseInt(año);
+
+  if (diaNum < 1 || diaNum > 7) {
+    return {
+      isValid: false,
+      errorMessage: 'Día de la semana debe estar entre 1 y 7',
+    };
+  }
+
+  if (semanaNum < 1 || semanaNum > 53) {
+    return {
+      isValid: false,
+      errorMessage: 'Semana debe estar entre 01 y 53',
+    };
+  }
+
+  return {
+    isValid: true,
+    components: {
+      dia,
+      semana,
+      año,
+      operario,
+      empacadora,
+      turno,
+      calibre,
+      formato,
+      empresa,
+      contador,
+    },
+  };
+};
+
+/**
+ * Detailed validation for pallet code with component analysis
+ * Returns specific validation results for each component
+ */
+export const validatePalletCodeDetailed = (code: string): {
+  isValid: boolean;
+  errorMessage?: string;
+  components?: {
+    dia_semana: string;
+    semana: string;
+    año: string;
+    horario_proceso: string;
+    calibre: string;
+    formato_caja: string;
+    empresa: string;
+    contador: string;
+  };
+} => {
+  if (!code || typeof code !== 'string') {
+    return {
+      isValid: false,
+      errorMessage: 'El código es requerido',
+    };
+  }
+
+  const cleanCode = code.trim();
+
+  if (cleanCode.length !== 13) {
+    return {
+      isValid: false,
+      errorMessage: `El código debe tener exactamente 13 dígitos (actual: ${cleanCode.length})`,
+    };
+  }
+
+  if (!/^\d{13}$/.test(cleanCode)) {
+    return {
+      isValid: false,
+      errorMessage: 'El código debe contener solo números',
+    };
+  }
+
+  // Parse components according to the new format
+  const dia_semana = cleanCode.slice(0, 1);
+  const semana = cleanCode.slice(1, 3);
+  const año = `20${cleanCode.slice(3, 5)}`;
+  const horario_codigo = cleanCode.slice(5, 6);
+  const horario_proceso = horario_codigo === '1' ? 'Mañana' : 'Tarde';
+  const calibre = cleanCode.slice(6, 8);
+  const formato_caja = cleanCode.slice(8, 9);
+  const empresa = cleanCode.slice(9, 10);
+  const contador = cleanCode.slice(10, 13);
+
+  // Basic range validations
+  const diaNum = parseInt(dia_semana);
+  const semanaNum = parseInt(semana);
+  const añoNum = parseInt(cleanCode.slice(3, 5));
+
+  if (diaNum < 1 || diaNum > 7) {
+    return {
+      isValid: false,
+      errorMessage: 'Día de la semana debe estar entre 1 y 7',
+    };
+  }
+
+  if (semanaNum < 1 || semanaNum > 53) {
+    return {
+      isValid: false,
+      errorMessage: 'Semana debe estar entre 01 y 53',
+    };
+  }
+
+  if (añoNum < 0 || añoNum > 99) {
+    return {
+      isValid: false,
+      errorMessage: 'Año debe estar entre 00 y 99',
+    };
+  }
+
+  return {
+    isValid: true,
+    components: {
+      dia_semana,
+      semana,
+      año,
+      horario_proceso,
+      calibre,
+      formato_caja,
+      empresa,
+      contador,
+    },
+  };
+};
+
+/**
+ * Validates if a code is a valid pallet code (13 digits)
+ * Format: D-SS-AA-H-CC-F-E-CCC
+ * D=Día, SS=Semana, AA=Año, H=Horario, CC=Calibre, F=Formato, E=Empresa, CCC=Contador
  */
 export const isValidPalletCode = (code: string): boolean => {
   if (!code || typeof code !== 'string') return false;
@@ -22,8 +210,8 @@ export const isValidPalletCode = (code: string): boolean => {
   // Remove any whitespace
   const cleanCode = code.trim();
 
-  // Check if it's exactly 12 digits
-  return /^\d{12}$/.test(cleanCode);
+  // Check if it's exactly 13 digits
+  return /^\d{13}$/.test(cleanCode);
 };
 
 /**
@@ -46,7 +234,7 @@ export const validateScannedCode = (code: string): CodeValidationResult => {
     };
   }
 
-  // Check for box code (15 digits)
+  // Check for box code (16 digits)
   if (isValidBoxCode(cleanCode)) {
     return {
       isValid: true,
@@ -54,7 +242,7 @@ export const validateScannedCode = (code: string): CodeValidationResult => {
     };
   }
 
-  // Check for pallet code (12 digits)
+  // Check for pallet code (13 digits)
   if (isValidPalletCode(cleanCode)) {
     return {
       isValid: true,
@@ -66,7 +254,7 @@ export const validateScannedCode = (code: string): CodeValidationResult => {
   return {
     isValid: false,
     errorMessage:
-      'El código debe ser válido: código de caja (15 dígitos) o código de pallet (12 dígitos)',
+      'El código debe ser válido: código de caja (16 dígitos) o código de pallet (13 dígitos)',
   };
 };
 
@@ -85,14 +273,14 @@ export const sanitizeCode = (code: string): string => {
 export const formatCodeForDisplay = (code: string): string => {
   const clean = sanitizeCode(code);
 
-  if (clean.length === 12) {
-    // Format pallet code: XXXX-XXXX-XXXX
-    return clean.replace(/(\d{4})(\d{4})(\d{4})/, '$1-$2-$3');
+  if (clean.length === 13) {
+    // Format pallet code: DSSAA-HCCF-E-CCC (Day/Week/Year-Schedule/Caliber/Format-Company-Counter)
+    return clean.replace(/(\d{5})(\d{4})(\d{1})(\d{3})/, '$1-$2-$3-$4');
   }
 
-  if (clean.length === 15) {
-    // Format box code: XXXXX-XXXXX-XXXXX
-    return clean.replace(/(\d{5})(\d{5})(\d{5})/, '$1-$2-$3');
+  if (clean.length === 16) {
+    // Format box code: DSSAA-OOET-CCFC-CCC (Day/Week/Year-Operator/Packer/Shift-Caliber/Format/Company-Counter)
+    return clean.replace(/(\d{5})(\d{4})(\d{4})(\d{3})/, '$1-$2-$3-$4');
   }
 
   return clean;

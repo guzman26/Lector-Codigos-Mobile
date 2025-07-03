@@ -166,12 +166,12 @@ const RegistrarCaja: React.FC = () => {
               placeholder={
                 scanBoxMode
                   ? 'Escanea códigos consecutivamente...'
-                  : 'Escanea o ingresa código de 15 dígitos'
+                  : 'Escanea o ingresa código de 16 dígitos'
               }
               className={`form-input code-input ${showValidationError || showTypeError ? 'error' : ''} ${scanBoxMode ? 'scanner-mode' : ''}`}
               disabled={loading}
               autoFocus
-              maxLength={15}
+              maxLength={16}
             />
 
             {showValidationError && (
@@ -183,7 +183,7 @@ const RegistrarCaja: React.FC = () => {
             {showTypeError && (
               <span className='validation-error'>
                 Este código es de un pallet. Solo se permiten códigos de caja
-                (15 dígitos).
+                (16 dígitos).
               </span>
             )}
 
@@ -202,7 +202,7 @@ const RegistrarCaja: React.FC = () => {
               <li>
                 • Ubicación: <strong>PACKING</strong> (automática)
               </li>
-              <li>• Solo códigos de caja (15 dígitos)</li>
+              <li>• Solo códigos de caja (16 dígitos)</li>
               <li>
                 • Presiona <kbd>Enter</kbd> para procesar
               </li>
@@ -226,19 +226,19 @@ const RegistrarCaja: React.FC = () => {
             <div className='test-buttons'>
               <button
                 type='button'
-                onClick={() => setCodigo('123456789012345')}
+                onClick={() => setCodigo('1234567890123456')}
                 className='test-btn'
                 disabled={loading}
               >
-                Caja: 123456789012345
+                Caja: 1234567890123456
               </button>
               <button
                 type='button'
-                onClick={() => setCodigo('987654321098765')}
+                onClick={() => setCodigo('9876543210987654')}
                 className='test-btn'
                 disabled={loading}
               >
-                Caja: 987654321098765
+                Caja: 9876543210987654
               </button>
             </div>
           </div>

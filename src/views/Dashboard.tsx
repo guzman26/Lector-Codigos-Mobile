@@ -127,12 +127,7 @@ const Dashboard: React.FC = () => {
           <span className='btn-text'>Consultar Código</span>
         </button>
 
-        <button
-          className='action-btn'
-          onClick={() => navigate('/crear-pallet')}
-        >
-          <span className='btn-text'>Crear Pallet</span>
-        </button>
+        
 
         <button
           className='action-btn'
@@ -141,8 +136,22 @@ const Dashboard: React.FC = () => {
           <span className='btn-text'>Crear Caja Custom</span>
         </button>
 
+        <button
+          className='action-btn'
+          onClick={() => navigate('/enviar-pallet-transito')}
+        >
+          <span className='btn-text'>Enviar Pallet a Transito</span>
+        </button>
+
         <button className='action-btn' onClick={() => navigate('/historial')}>
           <span className='btn-text'>Ver Historial ({history.length})</span>
+        </button>
+
+        <button
+          className='action-btn'
+          onClick={() => navigate('/crear-pallet')}
+        >
+          <span className='btn-text'>Crear Pallet</span>
         </button>
 
         <button className='action-btn' onClick={handleReportClick}>
