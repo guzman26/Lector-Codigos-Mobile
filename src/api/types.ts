@@ -124,6 +124,7 @@ export interface ProcessScanRequest {
   tipo?: 'BOX' | 'PALLET';
   palletCodigo?: string;
   scannedCodes?: string;
+  customInfo?: Array<[string, number]>; // [boxCode, eggCount]
 }
 
 /**

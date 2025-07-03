@@ -387,6 +387,7 @@ export const processScan = async (
         tipo,
         palletCodigo: request.palletCodigo,
         scannedCodes: request.scannedCodes,
+        customInfo: request.customInfo,
       }
     );
 

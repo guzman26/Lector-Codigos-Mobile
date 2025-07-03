@@ -75,9 +75,7 @@ const Dashboard: React.FC = () => {
               <span className='code-display'>
                 {formatCodeForDisplay(oldData.codigo)}
               </span>
-              <span className={`code-type ${oldData.tipo}`}>
-                {oldData.tipo === 'caja' ? 'Caja' : 'Pallet'}
-              </span>
+              
             </div>
 
             <div className='result-details'>
@@ -134,6 +132,13 @@ const Dashboard: React.FC = () => {
           onClick={() => navigate('/crear-pallet')}
         >
           <span className='btn-text'>Crear Pallet</span>
+        </button>
+
+        <button
+          className='action-btn'
+          onClick={() => navigate('/crear-caja-custom')}
+        >
+          <span className='btn-text'>Crear Caja Custom</span>
         </button>
 
         <button className='action-btn' onClick={() => navigate('/historial')}>
