@@ -149,7 +149,7 @@ const ConsultarCodigo: React.FC = () => {
       } else {
         return date.toLocaleDateString('es-ES');
       }
-    } catch (e) {
+    } catch {
       return 'Fecha inválida';
     }
   };
