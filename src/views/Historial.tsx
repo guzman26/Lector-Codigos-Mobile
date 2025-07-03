@@ -196,7 +196,7 @@ const Historial: React.FC = () => {
                 <div className='card-field'>
                   <span className='field-label'>Escaneado:</span>
                   <span className='field-value time-value'>
-                    {getTimeAgo(item.ultimaActualizacion)}
+                    {getTimeAgo(item.ultimaActualizacion ?? item.scannedAt)}
                   </span>
                 </div>
               </div>
@@ -211,7 +211,7 @@ const Historial: React.FC = () => {
                 </button>
 
                 <span className='scan-date'>
-                  {new Date(item.fechaCreacion).toLocaleDateString('es-ES', {
+                  {new Date(item.fechaCreacion ?? item.fecha_registro).toLocaleDateString('es-ES', {
                     day: '2-digit',
                     month: '2-digit',
                     year: '2-digit',

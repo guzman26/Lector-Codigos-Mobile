@@ -125,14 +125,14 @@ export const usePalletForm = (
         });
 
         setState(prev => {
-          const { generation, ...restErrors } = prev.errors;
+          const { generation: _GENERATION_UNUSED, ...restErrors } = prev.errors;
           return {
             ...prev,
             generatedCode: code,
             errors: restErrors,
           };
         });
-      } catch (error) {
+      } catch {
         setState(prev => ({
           ...prev,
           generatedCode: null,

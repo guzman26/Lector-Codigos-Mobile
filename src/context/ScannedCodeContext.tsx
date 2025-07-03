@@ -6,6 +6,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { getInfoFromScannedCode, ApiClientError } from '../api';
+import { apiTypeToUiType } from '../utils/codeType';
 import type { ScannedCodeInfo } from '../api/types';
 
 interface ScannedCodeContextType {
@@ -46,7 +47,13 @@ export const ScannedCodeProvider: React.FC<ScannedCodeProviderProps> = ({
     try {
       const result = await getInfoFromScannedCode({ codigo });
       if (result.data) {
-        setData(result.data);
+        const mappedData = {
+          ...result.data,
+          tipo: result.data.pkTipo
+            ? apiTypeToUiType(result.data.pkTipo)
+            : undefined,
+        };
+        setData(mappedData);
       } else {
         setError('No se encontró información para este código');
         setData(null);

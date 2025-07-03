@@ -41,6 +41,11 @@ export interface GetInfoFromScannedCodeRequest {
 export interface ScannedCodeInfo {
   codigo: string;
   pkTipo: 'BOX' | 'PALLET';
+  /**
+   * Some components rely on a lowercase `tipo` field (e.g. 'caja' | 'pallet').
+   * It is marked optional to keep backward-compatibility with pkTipo.
+   */
+  tipo?: 'caja' | 'pallet' | 'BOX' | 'PALLET';
   producto?: {
     id: string;
     nombre: string;
@@ -60,6 +65,10 @@ export interface ScannedCodeInfo {
   operario: string;
   empacadora: string;
   formato_caja: string;
+  /** Timestamp when the code entry was created. Added to satisfy Historial view. */
+  fechaCreacion?: string;
+  /** Timestamp for the last update. Added to satisfy Historial & ConsultarCodigo view. */
+  ultimaActualizacion?: string;
 }
 
 /**

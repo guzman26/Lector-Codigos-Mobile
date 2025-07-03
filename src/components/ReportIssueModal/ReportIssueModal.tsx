@@ -110,7 +110,7 @@ Prioridad: ${priorityLevels.find(p => p.value === formData.priority)?.label}
 Terminal: ${formData.terminalId}
 ${formData.lastScannedCode ? `Último Código: ${formData.lastScannedCode}` : ''}
 
-Inforamción adicional:
+Información adicional:
 ${formData.description.trim()}
 
 ---
