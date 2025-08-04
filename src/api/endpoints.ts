@@ -36,6 +36,51 @@ export const getInfoFromScannedCode = async (
     );
   }
 
+  // Development mode: simulate API response (also used as fallback if real API fails)
+  const shouldUseMockMode =
+    import.meta.env.DEV &&
+    (!import.meta.env.VITE_API_URL ||
+      import.meta.env.VITE_API_URL.includes('localhost') ||
+      import.meta.env.VITE_USE_MOCK_API === 'true');
+
+  if (shouldUseMockMode) {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Mock response for scanned code info
+    const mockResponse: ScannedCodeInfo = {
+      codigo: request.codigo.trim(),
+      pkTipo: validation.type === 'box' ? 'BOX' : 'PALLET',
+      tipo: validation.type === 'box' ? 'caja' : 'pallet',
+      producto: {
+        id: 'PROD-001',
+        nombre: 'Huevos Frescos',
+        descripcion: 'Huevos de gallina frescos',
+      },
+      ubicacion: {
+        almacen: 'Almacén Principal',
+        zona: 'Zona A',
+        posicion: 'A1-B2-C3',
+      },
+      estado: 'activo',
+      timestamp: new Date().toISOString(),
+      scannedAt: new Date().toISOString(),
+      fecha_registro: new Date().toISOString(),
+      contador: Math.floor(Math.random() * 300) + 100 + '', // Random egg count between 100-400
+      operario: 'Operario Demo',
+      empacadora: 'Empacadora 1',
+      formato_caja: '30 Huevos',
+      fechaCreacion: new Date().toISOString(),
+      ultimaActualizacion: new Date().toISOString(),
+    };
+
+    return {
+      success: true,
+      data: mockResponse,
+      message: 'Información obtenida exitosamente (modo desarrollo)',
+    };
+  }
+
   // Make the API request
   try {
     const response = await apiClient.get<ScannedCodeInfo>(
@@ -45,6 +90,45 @@ export const getInfoFromScannedCode = async (
 
     return response;
   } catch (error) {
+    console.error('❌ Get info from scanned code request failed:', error);
+
+    // In development, if the real API fails, fall back to mock mode
+    if (import.meta.env.DEV) {
+      console.warn('🔄 Falling back to mock mode due to API failure');
+
+      const fallbackResponse: ScannedCodeInfo = {
+        codigo: request.codigo.trim(),
+        pkTipo: validation.type === 'box' ? 'BOX' : 'PALLET',
+        tipo: validation.type === 'box' ? 'caja' : 'pallet',
+        producto: {
+          id: 'PROD-001',
+          nombre: 'Huevos Frescos',
+          descripcion: 'Huevos de gallina frescos',
+        },
+        ubicacion: {
+          almacen: 'Almacén Principal',
+          zona: 'Zona A',
+          posicion: 'A1-B2-C3',
+        },
+        estado: 'activo',
+        timestamp: new Date().toISOString(),
+        scannedAt: new Date().toISOString(),
+        fecha_registro: new Date().toISOString(),
+        contador: '150', // Default egg count
+        operario: 'Operario Demo',
+        empacadora: 'Empacadora 1',
+        formato_caja: '30 Huevos',
+        fechaCreacion: new Date().toISOString(),
+        ultimaActualizacion: new Date().toISOString(),
+      };
+
+      return {
+        success: true,
+        data: fallbackResponse,
+        message: 'Información obtenida (fallback)',
+      };
+    }
+
     // Re-throw with more context if needed
     if (error instanceof apiClient.ApiClientError) {
       throw error;
