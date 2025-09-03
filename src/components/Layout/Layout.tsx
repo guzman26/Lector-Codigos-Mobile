@@ -15,7 +15,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const getActiveTab = (): string => {
     const path = location.pathname;
     if (path.includes('/configuracion')) return 'configuracion';
-    if (path.includes('/historial')) return 'historial';
     return 'escaneo'; // Default
   };
 
@@ -28,12 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: 'Escaneo',
       isActive: activeTab === 'escaneo',
     },
-    {
-      id: 'historial',
-      icon: '📋',
-      label: 'Historial',
-      isActive: activeTab === 'historial',
-    },
+    
     {
       id: 'configuracion',
       icon: '⚙️',
@@ -49,9 +43,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     switch (tabId) {
       case 'escaneo':
         navigate('/dashboard');
-        break;
-      case 'historial':
-        navigate('/historial');
         break;
       case 'configuracion':
         navigate('/configuracion');

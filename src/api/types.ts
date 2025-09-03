@@ -65,9 +65,8 @@ export interface ScannedCodeInfo {
   operario: string;
   empacadora: string;
   formato_caja: string;
-  /** Timestamp when the code entry was created. Added to satisfy Historial view. */
+  // Opcional: timestamps adicionales (historial eliminado)
   fechaCreacion?: string;
-  /** Timestamp for the last update. Added to satisfy Historial & ConsultarCodigo view. */
   ultimaActualizacion?: string;
 }
 

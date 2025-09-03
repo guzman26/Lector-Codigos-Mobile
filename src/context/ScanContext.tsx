@@ -12,10 +12,8 @@ interface ScanContextType {
   data: ProcessScanResult | null;
   loading: boolean;
   error: string | null;
-  history: ProcessScanResult[];
   processScan: (request: ProcessScanRequest) => Promise<void>;
   reset: () => void;
-  clearHistory: () => void;
 }
 
 const ScanContext = createContext<ScanContextType | undefined>(undefined);
@@ -28,7 +26,7 @@ export const ScanProvider: React.FC<ScanProviderProps> = ({ children }) => {
   const [data, setData] = useState<ProcessScanResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<ProcessScanResult[]>([]);
+  // Historial eliminado
 
   const processScan = useCallback(async (request: ProcessScanRequest) => {
     if (!request.codigo?.trim()) {
@@ -48,17 +46,6 @@ export const ScanProvider: React.FC<ScanProviderProps> = ({ children }) => {
       const result = await submitScan(request);
 
       setData(result);
-
-      // Agregar al historial (evitar duplicados)
-      setHistory(prev => {
-        const exists = prev.some(
-          item =>
-            item.data?.codigo === result.data?.codigo &&
-            item.data?.timestamp === result.data?.timestamp
-        );
-        if (exists) return prev;
-        return [result, ...prev.slice(0, 19)]; // Mantener solo 20 elementos
-      });
     } catch (error) {
       const errorMessage =
         error instanceof ApiClientError
@@ -78,18 +65,14 @@ export const ScanProvider: React.FC<ScanProviderProps> = ({ children }) => {
     setError(null);
   }, []);
 
-  const clearHistory = useCallback(() => {
-    setHistory([]);
-  }, []);
+  // clearHistory eliminado
 
   const value: ScanContextType = {
     data,
     loading,
     error,
-    history,
     processScan,
     reset,
-    clearHistory,
   };
 
   return <ScanContext.Provider value={value}>{children}</ScanContext.Provider>;

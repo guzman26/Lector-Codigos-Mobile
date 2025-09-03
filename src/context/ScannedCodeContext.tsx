@@ -13,10 +13,8 @@ interface ScannedCodeContextType {
   data: ScannedCodeInfo | null;
   loading: boolean;
   error: string | null;
-  history: ScannedCodeInfo[];
   getCodeInfo: (codigo: string) => Promise<void>;
   reset: () => void;
-  clearHistory: () => void;
 }
 
 const ScannedCodeContext = createContext<ScannedCodeContextType | undefined>(
@@ -33,7 +31,7 @@ export const ScannedCodeProvider: React.FC<ScannedCodeProviderProps> = ({
   const [data, setData] = useState<ScannedCodeInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<ScannedCodeInfo[]>([]);
+  // Historial eliminado: no se mantiene lista de escaneos
 
   const getCodeInfo = useCallback(async (codigo: string) => {
     if (!codigo?.trim()) {
@@ -77,18 +75,14 @@ export const ScannedCodeProvider: React.FC<ScannedCodeProviderProps> = ({
     setError(null);
   }, []);
 
-  const clearHistory = useCallback(() => {
-    setHistory([]);
-  }, []);
+  // clearHistory eliminado
 
   const value: ScannedCodeContextType = {
     data,
     loading,
     error,
-    history,
     getCodeInfo,
     reset,
-    clearHistory,
   };
 
   return (

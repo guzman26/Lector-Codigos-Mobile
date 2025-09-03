@@ -8,7 +8,6 @@ import {
 import Layout from '../components/Layout';
 import Dashboard from '../views/Dashboard';
 import Configuracion from '../views/Configuracion';
-import Historial from '../views/Historial';
 import RegistrarCaja from '../views/Scanning/RegistrarCajaNueva/RegistrarCaja';
 import ConsultarCodigo from '../views/Scanning/ConsultarCodigo/ConsultarCodigo';
 import CrearPallet from '../views/Scanning/CreatePalletForm/CreatePalletForm';
@@ -30,8 +29,7 @@ const AppRoutes: React.FC = () => {
           {/* Configuration route */}
           <Route path='/configuracion' element={<Configuracion />} />
 
-          {/* History route */}
-          <Route path='/historial' element={<Historial />} />
+
 
           {/* Register new box route */}
           <Route path='/registrar-caja' element={<RegistrarCaja />} />

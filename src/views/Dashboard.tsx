@@ -8,12 +8,11 @@ import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { data: oldData, history: oldHistory } = useScannedCodeContext();
-  const { data: scanData, history: scanHistory } = useScanContext();
+  const { data: oldData } = useScannedCodeContext();
+  const { data: scanData } = useScanContext();
   const [showReportModal, setShowReportModal] = useState(false);
 
-  // Use the new scan data if available, otherwise fallback to old data
-  const history = scanHistory.length > 0 ? scanHistory : oldHistory;
+  // Historial eliminado: no se utiliza historial
 
   const handleRegistrarCaja = () => {
     navigate('/registrar-caja');
@@ -143,9 +142,7 @@ const Dashboard: React.FC = () => {
           <span className='btn-text'>Enviar Pallet a Transito</span>
         </button>
 
-        <button className='action-btn' onClick={() => navigate('/historial')}>
-          <span className='btn-text'>Ver Historial ({history.length})</span>
-        </button>
+
 
         <button
           className='action-btn'
