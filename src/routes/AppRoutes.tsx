@@ -13,6 +13,7 @@ import ConsultarCodigo from '../views/Scanning/ConsultarCodigo/ConsultarCodigo';
 import CrearPallet from '../views/Scanning/CreatePalletForm/CreatePalletForm';
 import CreateCustomBox from '../views/Scanning/CreateCustomBox/CreateCustomBox';
 import SendPalletToTransit from '../views/Scanning/SendPalletToTransit/SendPalletToTransit';
+import PalletsList from '../views/Scanning/PalletsList';
 
 
 const AppRoutes: React.FC = () => {
@@ -45,6 +46,9 @@ const AppRoutes: React.FC = () => {
 
           {/* Enviar pallet a TRANSITO */}
           <Route path='/enviar-pallet-transito' element={<SendPalletToTransit />} />
+
+          {/* Listado de pallets activos */}
+          <Route path='/pallets-activos' element={<PalletsList />} />
 
           {/* Future routes can be added here */}
           {/* <Route path="/scanner" element={<Scanner />} /> */}

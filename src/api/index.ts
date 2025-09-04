@@ -31,6 +31,9 @@ export {
   submitMovePallet,
 } from './endpoints';
 
+// Pallets helpers
+export { pallets, getActivePallets, closePallet } from './endpoints';
+
 // Utilities (re-export for convenience)
 export {
   validateScannedCode,

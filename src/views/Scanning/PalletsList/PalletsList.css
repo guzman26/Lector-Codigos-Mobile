@@ -1,0 +1,151 @@
+.pallets-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pallets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 20px;
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.select-input {
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.refresh-btn,
+.load-more-btn,
+.close-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #1e293b;
+  color: #fff;
+}
+
+.refresh-btn:disabled,
+.load-more-btn:disabled,
+.close-btn:disabled {
+  opacity: 0.6;
+}
+
+.error-banner {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.pallets-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .pallets-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pallets-list {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.pallet-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pallet-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pallet-code {
+  font-weight: 600;
+}
+
+.pill-group {
+  display: flex;
+  gap: 6px;
+}
+
+.pill {
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.pill.state.open {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.pill.state.closed {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.pill.location {
+  background: #ecfccb;
+  color: #3f6212;
+}
+
+.pallet-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #475569;
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.empty-state {
+  padding: 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+

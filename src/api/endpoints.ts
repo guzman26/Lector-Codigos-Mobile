@@ -17,6 +17,9 @@ import type {
   ApiResponse,
   MovePalletRequest,
   MovePalletResult,
+  GetActivePalletsParams,
+  GetActivePalletsResult,
+  ClosePalletResult,
 } from './types';
 
 /**
@@ -791,3 +794,69 @@ export const endpoints = {
   movePallet,
   submitMovePallet,
 } as const;
+
+/**
+ * Get a paginated list of active pallets
+ */
+export const getActivePallets = async (
+  params: GetActivePalletsParams = { ubicacion: 'PACKING', limit: 50 }
+): Promise<ApiResponse<GetActivePalletsResult>> => {
+  const { ubicacion = 'PACKING', limit = 50, lastEvaluatedKey } = params;
+
+  try {
+    const response = await apiClient.get<GetActivePalletsResult>(
+      '/getActivePallets',
+      {
+        ubicacion,
+        limit,
+        ...(lastEvaluatedKey ? { lastEvaluatedKey } : {}),
+      }
+    );
+    return response;
+  } catch (error) {
+    if (error instanceof apiClient.ApiClientError) {
+      throw error;
+    }
+    throw new apiClient.ApiClientError(
+      'Error al obtener pallets activos',
+      'REQUEST_FAILED',
+      error
+    );
+  }
+};
+
+/**
+ * Close a pallet by its code
+ */
+export const closePallet = async (
+  codigo: string
+): Promise<ApiResponse<ClosePalletResult>> => {
+  // Trim and do minimal sanity check without enforcing length, backend is source of truth
+  const clean = (codigo || '').trim();
+  if (!/^[0-9]{13,14}$/.test(clean)) {
+    // Allow 13 or 14 for compatibility; backend validation will be authoritative
+    console.warn('closePallet: código con formato inusual');
+  }
+
+  try {
+    const response = await apiClient.post<ClosePalletResult>('/closePallet', {
+      codigo: clean,
+    });
+    return response;
+  } catch (error) {
+    if (error instanceof apiClient.ApiClientError) {
+      throw error;
+    }
+    throw new apiClient.ApiClientError(
+      'Error al cerrar el pallet',
+      'REQUEST_FAILED',
+      error
+    );
+  }
+};
+
+// Extend exported endpoints object
+export const pallets = {
+  getActivePallets,
+  closePallet,
+};

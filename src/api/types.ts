@@ -191,3 +191,43 @@ export interface MovePalletResult {
     [key: string]: any;
   };
 }
+
+/**
+ * Get Active Pallets - Query params
+ */
+export interface GetActivePalletsParams {
+  ubicacion?: string; // e.g., PACKING
+  limit?: number; // page size
+  lastEvaluatedKey?: string; // pagination token
+}
+
+/**
+ * Active Pallet item (minimal, flexible shape)
+ */
+export interface ActivePallet {
+  codigo: string; // 14-digit pallet code per backend
+  estado?: 'open' | 'closed' | string;
+  ubicacion?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: any;
+}
+
+/**
+ * Get Active Pallets - Response
+ */
+export interface GetActivePalletsResult {
+  items: ActivePallet[];
+  lastEvaluatedKey?: string;
+}
+
+/**
+ * Close Pallet response (minimal)
+ */
+export interface ClosePalletResult {
+  codigo: string;
+  estadoAnterior?: string;
+  estadoNuevo?: string;
+  mensaje?: string;
+  fechaActualizacion?: string;
+}
