@@ -11,6 +11,7 @@ export interface PalletFormData {
   turno: string;
   calibre: string;
   formato: string;
+  empresa: string;
   codigoManual: string;
   useManualCode: boolean;
 }
@@ -75,4 +76,5 @@ export interface PalletCodeParams {
   turno: string;
   calibre: string;
   formato: string;
+  empresa: string;
 }

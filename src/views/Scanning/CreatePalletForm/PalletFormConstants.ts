@@ -8,7 +8,7 @@
 export const ERROR_MESSAGES = {
   REQUIRED_FIELD: 'Este campo es obligatorio',
   INVALID_OPTION: 'Seleccione una opción válida',
-  INVALID_CODE: 'El código debe tener 13 dígitos',
+  INVALID_CODE: 'El código debe tener 14 dígitos',
   FORM_INCOMPLETE: 'Por favor complete todos los campos requeridos',
   GENERIC_ERROR: 'Ha ocurrido un error al procesar la solicitud',
   UNEXPECTED_ERROR: 'Error inesperado. Por favor intente nuevamente',
@@ -59,6 +59,26 @@ export const FORMATO_OPTIONS = [
 ];
 
 /**
+ * Company options (empresa)
+ */
+export const COMPANY_CODE_TO_NAME: Record<string | number, string> = {
+  1: 'Lomas Altas',
+  2: 'Santa Marta',
+  3: 'Coliumo',
+  4: 'El monte',
+  5: 'Libre',
+};
+
+export const EMPRESA_OPTIONS = [
+  { value: '', label: 'Seleccione empresa' },
+  { value: '01', label: COMPANY_CODE_TO_NAME[1] },
+  { value: '02', label: COMPANY_CODE_TO_NAME[2] },
+  { value: '03', label: COMPANY_CODE_TO_NAME[3] },
+  { value: '04', label: COMPANY_CODE_TO_NAME[4] },
+  { value: '05', label: COMPANY_CODE_TO_NAME[5] },
+];
+
+/**
  * Success messages
  */
 export const SUCCESS_MESSAGES = {
@@ -72,6 +92,7 @@ export const FORM_FIELDS = {
   TURNO: 'turno',
   CALIBRE: 'calibre',
   FORMATO: 'formato',
+  EMPRESA: 'empresa',
   CODIGO_MANUAL: 'codigoManual',
   USE_MANUAL_CODE: 'useManualCode',
 } as const;

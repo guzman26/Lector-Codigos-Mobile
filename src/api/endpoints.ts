@@ -552,7 +552,7 @@ export const createPallet = async (
 
   if (!validation.isValid || validation.type !== 'pallet') {
     throw new apiClient.ApiClientError(
-      'El código debe ser un código de pallet válido (13 dígitos)',
+      'El código debe ser un código de pallet válido (14 dígitos)',
       'VALIDATION_ERROR'
     );
   }
@@ -801,7 +801,7 @@ export const endpoints = {
 export const getActivePallets = async (
   params: GetActivePalletsParams = { ubicacion: 'PACKING', limit: 50 }
 ): Promise<ApiResponse<GetActivePalletsResult>> => {
-  const { ubicacion = 'PACKING', limit = 50, lastEvaluatedKey } = params;
+  const { ubicacion = 'PACKING', limit = 50, lastKey, lastEvaluatedKey } = params;
 
   try {
     const response = await apiClient.get<GetActivePalletsResult>(
@@ -809,6 +809,7 @@ export const getActivePallets = async (
       {
         ubicacion,
         limit,
+        ...(lastKey ? { lastKey } : {}),
         ...(lastEvaluatedKey ? { lastEvaluatedKey } : {}),
       }
     );

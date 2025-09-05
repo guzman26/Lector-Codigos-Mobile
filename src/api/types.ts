@@ -198,7 +198,8 @@ export interface MovePalletResult {
 export interface GetActivePalletsParams {
   ubicacion?: string; // e.g., PACKING
   limit?: number; // page size
-  lastEvaluatedKey?: string; // pagination token
+  lastKey?: string; // pagination token (preferred)
+  lastEvaluatedKey?: string; // legacy alias supported by backend
 }
 
 /**
@@ -218,7 +219,8 @@ export interface ActivePallet {
  */
 export interface GetActivePalletsResult {
   items: ActivePallet[];
-  lastEvaluatedKey?: string;
+  lastKey?: string; // preferred
+  lastEvaluatedKey?: string; // legacy alias
 }
 
 /**

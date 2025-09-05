@@ -14,7 +14,6 @@ const PalletsList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastKey, setLastKey] = useState<string | undefined>(undefined);
   const [isClosing, setIsClosing] = useState<string | null>(null);
-  const [locationFilter, setLocationFilter] = useState<string>('PACKING');
 
   const canLoadMore = useMemo(() => Boolean(lastKey), [lastKey]);
 
@@ -23,9 +22,9 @@ const PalletsList: React.FC = () => {
     setError(null);
     try {
       const res = await getActivePallets({
-        ubicacion: locationFilter || undefined,
+        ubicacion: 'PACKING',
         limit: DEFAULT_PAGE_SIZE,
-        lastEvaluatedKey: append ? lastKey : undefined,
+        lastKey: append ? lastKey : undefined,
       });
 
       if (!res.success) {
@@ -34,7 +33,7 @@ const PalletsList: React.FC = () => {
 
       const data = res.data as GetActivePalletsResult;
       setItems(prev => (append ? [...prev, ...(data?.items || [])] : data?.items || []));
-      setLastKey(data?.lastEvaluatedKey);
+      setLastKey(data?.lastKey || data?.lastEvaluatedKey);
     } catch (e: any) {
       setError(e?.message || 'Error al cargar los pallets');
     } finally {
@@ -43,12 +42,12 @@ const PalletsList: React.FC = () => {
   };
 
   useEffect(() => {
-    // initial load or when filter changes
+    // initial load
     setItems([]);
     setLastKey(undefined);
     fetchPage(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locationFilter]);
+  }, []);
 
   const handleClose = async (codigo: string) => {
     if (!codigo) return;
@@ -73,19 +72,6 @@ const PalletsList: React.FC = () => {
       <div className='pallets-header'>
         <h2 className='page-title'>Pallets Activos</h2>
         <div className='filters'>
-          <label className='filter-item'>
-            <span>Ubicación</span>
-            <select
-              className='select-input'
-              value={locationFilter}
-              onChange={e => setLocationFilter(e.target.value)}
-            >
-              <option value='PACKING'>PACKING</option>
-              <option value='TRANSITO'>TRANSITO</option>
-              <option value='BODEGA'>BODEGA</option>
-              <option value='VENTA'>VENTA</option>
-            </select>
-          </label>
           <button
             className='refresh-btn'
             onClick={() => fetchPage(false)}

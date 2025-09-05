@@ -9,6 +9,8 @@ import {
   TURNO_OPTIONS,
   CALIBRE_OPTIONS,
   FORMATO_OPTIONS,
+  EMPRESA_OPTIONS,
+  FORM_FIELDS,
 } from './PalletFormConstants';
 import './CreatePalletForm.css';
 
@@ -87,10 +89,10 @@ export const CreatePalletForm: React.FC<CreatePalletFormProps> = ({
                 name='codigoManual'
                 value={formData.codigoManual}
                 onChange={handleInputChange}
-                placeholder='Ingrese el código de 12 dígitos'
+                placeholder='Ingrese el código de 14 dígitos'
                 className={`form-input ${errors.codigoManual ? 'error' : ''}`}
-                maxLength={12}
-                pattern='[0-9]{12}'
+                maxLength={14}
+                pattern='[0-9]{14}'
                 required
               />
               {errors.codigoManual && (
@@ -166,6 +168,29 @@ export const CreatePalletForm: React.FC<CreatePalletFormProps> = ({
               </select>
               {errors.formato && (
                 <span className='error-text'>{errors.formato}</span>
+              )}
+            </div>
+
+            <div className='form-group'>
+              <label htmlFor='empresa' className='form-label'>
+                Empresa <span className='required'>*</span>
+              </label>
+              <select
+                id='empresa'
+                name={FORM_FIELDS.EMPRESA}
+                value={formData.empresa}
+                onChange={handleInputChange}
+                className={`form-select ${errors.empresa ? 'error' : ''}`}
+                required
+              >
+                {EMPRESA_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {errors.empresa && (
+                <span className='error-text'>{errors.empresa}</span>
               )}
             </div>
           </div>

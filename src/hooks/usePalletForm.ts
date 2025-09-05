@@ -30,6 +30,7 @@ const initialFormData: PalletFormData = {
   turno: '',
   calibre: '',
   formato: '',
+  empresa: '',
   codigoManual: '',
   useManualCode: false,
 };
@@ -51,13 +52,13 @@ const generatePalletCode = (params: PalletCodeParams): string => {
   // 3) año, últimos dos dígitos
   const año = now.format('YY');
 
-  // Generate a 12-digit pallet code: YYMMDDTCFXXX
-  // YY = Year, MM = Month, DD = Day, T = Turno, C = Calibre, F = Formato, XXX = Random
-  const randomPart = Math.floor(Math.random() * 1000)
+  // Build 14-digit code: D(1) + SS(2) + AA(2) + T(1) + CC(2) + F(1) + EE(2) + CCC(3)
+  const ee = params.empresa.padStart(2, '0');
+  const contador = Math.floor(Math.random() * 1000)
     .toString()
     .padStart(3, '0');
 
-  return `${diaSemana}${semana}${año}${params.turno}${params.calibre.slice(-1)}${params.formato}${randomPart}`;
+  return `${diaSemana}${semana}${año}${params.turno}${params.calibre}${params.formato}${ee}${contador}`;
 };
 
 /**
@@ -87,6 +88,9 @@ const validateForm = (formData: PalletFormData): PalletFormErrors => {
     if (!formData.formato) {
       errors[FORM_FIELDS.FORMATO] = ERROR_MESSAGES.REQUIRED_FIELD;
     }
+    if (!formData.empresa) {
+      errors[FORM_FIELDS.EMPRESA] = ERROR_MESSAGES.REQUIRED_FIELD;
+    }
   }
 
   return errors;
@@ -115,13 +119,15 @@ export const usePalletForm = (
       !state.formData.useManualCode &&
       state.formData.turno &&
       state.formData.calibre &&
-      state.formData.formato
+      state.formData.formato &&
+      state.formData.empresa
     ) {
       try {
         const code = generatePalletCode({
           turno: state.formData.turno,
           calibre: state.formData.calibre,
           formato: state.formData.formato,
+          empresa: state.formData.empresa,
         });
 
         setState(prev => {
@@ -157,6 +163,7 @@ export const usePalletForm = (
     state.formData.turno,
     state.formData.calibre,
     state.formData.formato,
+    state.formData.empresa,
     state.formData.useManualCode,
     state.formData.codigoManual,
   ]);
