@@ -8,7 +8,7 @@
 export const ERROR_MESSAGES = {
   REQUIRED_FIELD: 'Este campo es obligatorio',
   INVALID_OPTION: 'Seleccione una opción válida',
-  INVALID_CODE: 'El código debe tener 14 dígitos',
+  INVALID_CODE: 'El código base debe tener 11 dígitos',
   FORM_INCOMPLETE: 'Por favor complete todos los campos requeridos',
   GENERIC_ERROR: 'Ha ocurrido un error al procesar la solicitud',
   UNEXPECTED_ERROR: 'Error inesperado. Por favor intente nuevamente',
@@ -93,6 +93,7 @@ export const FORM_FIELDS = {
   CALIBRE: 'calibre',
   FORMATO: 'formato',
   EMPRESA: 'empresa',
+  MAX_BOXES: 'maxBoxes',
   CODIGO_MANUAL: 'codigoManual',
   USE_MANUAL_CODE: 'useManualCode',
 } as const;

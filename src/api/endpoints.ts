@@ -545,14 +545,20 @@ export const submitScan = async (
  * Validates the pallet code before making the request
  */
 export const createPallet = async (
-  codigo: string
+  codigo: string,
+  maxBoxes: number = 48
 ): Promise<ApiResponse<any>> => {
-  // Client-side validation
-  const validation = validateScannedCode(codigo);
-
-  if (!validation.isValid || validation.type !== 'pallet') {
+  // Client-side validation: codigo is baseCode (11 digits)
+  const base = (codigo || '').trim();
+  if (!/^\d{11}$/.test(base)) {
     throw new apiClient.ApiClientError(
-      'El código debe ser un código de pallet válido (14 dígitos)',
+      'El código base debe tener 11 dígitos',
+      'VALIDATION_ERROR'
+    );
+  }
+  if (!Number.isFinite(maxBoxes) || maxBoxes <= 0) {
+    throw new apiClient.ApiClientError(
+      'maxBoxes debe ser un número positivo',
       'VALIDATION_ERROR'
     );
   }
@@ -560,7 +566,8 @@ export const createPallet = async (
   // Make the API request
   try {
     const response = await apiClient.post<any>('/createPallet', {
-      codigo: codigo.trim(),
+      codigo: base,
+      maxBoxes,
     });
 
     return response;

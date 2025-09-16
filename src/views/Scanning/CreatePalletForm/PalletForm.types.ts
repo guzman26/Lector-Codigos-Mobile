@@ -12,6 +12,7 @@ export interface PalletFormData {
   calibre: string;
   formato: string;
   empresa: string;
+  maxBoxes: number;
   codigoManual: string;
   useManualCode: boolean;
 }
@@ -30,7 +31,7 @@ export interface PalletFormState {
   formData: PalletFormData;
   errors: PalletFormErrors;
   isSubmitting: boolean;
-  generatedCode: string | null;
+  generatedCode: string | null; // This will hold the baseCode (11 digits) when auto
   alertMessage: string | null;
   alertType: 'success' | 'error' | null;
 }

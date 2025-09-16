@@ -293,6 +293,15 @@ export const formatCodeForDisplay = (code: string): string => {
 };
 
 /**
+ * Validates pallet base code (11 digits): D(1) SS(2) AA(2) T(1) CC(2) F(1) EE(2)
+ */
+export const isValidPalletBaseCode = (code: string): boolean => {
+  if (!code || typeof code !== 'string') return false;
+  const clean = code.trim();
+  return /^\d{11}$/.test(clean);
+};
+
+/**
  * Validates issue report description
  */
 export const validateIssueDescription = (

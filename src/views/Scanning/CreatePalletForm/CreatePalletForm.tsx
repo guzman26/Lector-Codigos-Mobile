@@ -81,7 +81,7 @@ export const CreatePalletForm: React.FC<CreatePalletFormProps> = ({
           <div className='manual-code-section'>
             <div className='form-group'>
               <label htmlFor='codigoManual' className='form-label'>
-                Código del Pallet <span className='required'>*</span>
+                Código Base del Pallet (11 dígitos) <span className='required'>*</span>
               </label>
               <input
                 type='text'
@@ -89,10 +89,10 @@ export const CreatePalletForm: React.FC<CreatePalletFormProps> = ({
                 name='codigoManual'
                 value={formData.codigoManual}
                 onChange={handleInputChange}
-                placeholder='Ingrese el código de 14 dígitos'
+                placeholder='Ingrese el código base de 11 dígitos'
                 className={`form-input ${errors.codigoManual ? 'error' : ''}`}
-                maxLength={14}
-                pattern='[0-9]{14}'
+                maxLength={11}
+                pattern='[0-9]{11}'
                 required
               />
               {errors.codigoManual && (
@@ -125,6 +125,25 @@ export const CreatePalletForm: React.FC<CreatePalletFormProps> = ({
               )}
             </div>
 
+            <div className='form-group'>
+              <label htmlFor='maxBoxes' className='form-label'>
+                Capacidad de cajas (maxBoxes)
+              </label>
+              <input
+                type='number'
+                id='maxBoxes'
+                name={FORM_FIELDS.MAX_BOXES}
+                value={formData.maxBoxes}
+                onChange={handleInputChange}
+                className='form-input'
+                min={1}
+                max={999}
+                placeholder='48'
+              />
+              {errors.maxBoxes && (
+                <span className='error-text'>{errors.maxBoxes}</span>
+              )}
+            </div>
             <div className='form-group'>
               <label htmlFor='calibre' className='form-label'>
                 Calibre <span className='required'>*</span>

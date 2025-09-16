@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { createPallet } from '../api/endpoints';
-import { validateScannedCode } from '../utils/validators';
+import { isValidPalletBaseCode } from '../utils/validators';
 import type {
   PalletFormData,
   PalletFormErrors,
@@ -31,6 +31,7 @@ const initialFormData: PalletFormData = {
   calibre: '',
   formato: '',
   empresa: '',
+  maxBoxes: 48,
   codigoManual: '',
   useManualCode: false,
 };
@@ -52,13 +53,9 @@ const generatePalletCode = (params: PalletCodeParams): string => {
   // 3) año, últimos dos dígitos
   const año = now.format('YY');
 
-  // Build 14-digit code: D(1) + SS(2) + AA(2) + T(1) + CC(2) + F(1) + EE(2) + CCC(3)
+  // Build 11-digit base code: D(1) + SS(2) + AA(2) + T(1) + CC(2) + F(1) + EE(2)
   const ee = params.empresa.padStart(2, '0');
-  const contador = Math.floor(Math.random() * 1000)
-    .toString()
-    .padStart(3, '0');
-
-  return `${diaSemana}${semana}${año}${params.turno}${params.calibre}${params.formato}${ee}${contador}`;
+  return `${diaSemana}${semana}${año}${params.turno}${params.calibre}${params.formato}${ee}`;
 };
 
 /**
@@ -72,8 +69,7 @@ const validateForm = (formData: PalletFormData): PalletFormErrors => {
     if (!formData.codigoManual.trim()) {
       errors[FORM_FIELDS.CODIGO_MANUAL] = ERROR_MESSAGES.REQUIRED_FIELD;
     } else {
-      const validation = validateScannedCode(formData.codigoManual);
-      if (!validation.isValid || validation.type !== 'pallet') {
+      if (!isValidPalletBaseCode(formData.codigoManual)) {
         errors[FORM_FIELDS.CODIGO_MANUAL] = ERROR_MESSAGES.INVALID_CODE;
       }
     }
@@ -233,11 +229,11 @@ export const usePalletForm = (
         return;
       }
 
-      const codigoToSubmit = state.formData.useManualCode
+      const baseCodeToSubmit = state.formData.useManualCode
         ? state.formData.codigoManual.trim()
         : state.generatedCode;
 
-      if (!codigoToSubmit) {
+      if (!baseCodeToSubmit) {
         setState(prev => ({
           ...prev,
           alertMessage: ERROR_MESSAGES.CODE_GENERATION_ERROR,
@@ -254,7 +250,7 @@ export const usePalletForm = (
       }));
 
       try {
-        const response = await createPallet(codigoToSubmit);
+        const response = await createPallet(baseCodeToSubmit, state.formData.maxBoxes);
 
         if (response.success) {
           setState(prev => ({
@@ -266,7 +262,7 @@ export const usePalletForm = (
 
           // Call success callback
           if (onPalletCreated) {
-            onPalletCreated(codigoToSubmit);
+            onPalletCreated(baseCodeToSubmit);
           }
 
           // Reset form after a short delay
