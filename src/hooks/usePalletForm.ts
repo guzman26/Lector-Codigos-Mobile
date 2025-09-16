@@ -31,7 +31,7 @@ const initialFormData: PalletFormData = {
   calibre: '',
   formato: '',
   empresa: '',
-  maxBoxes: 48,
+  maxBoxes: '',
   codigoManual: '',
   useManualCode: false,
 };
@@ -250,7 +250,10 @@ export const usePalletForm = (
       }));
 
       try {
-        const response = await createPallet(baseCodeToSubmit, state.formData.maxBoxes);
+        const maxBoxesNum = state.formData.maxBoxes
+          ? Number(state.formData.maxBoxes)
+          : undefined;
+        const response = await createPallet(baseCodeToSubmit, maxBoxesNum);
 
         if (response.success) {
           setState(prev => ({

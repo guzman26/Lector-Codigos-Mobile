@@ -546,7 +546,7 @@ export const submitScan = async (
  */
 export const createPallet = async (
   codigo: string,
-  maxBoxes: number = 48
+  maxBoxes?: number
 ): Promise<ApiResponse<any>> => {
   // Client-side validation: codigo is baseCode (11 digits)
   const base = (codigo || '').trim();
@@ -556,19 +556,22 @@ export const createPallet = async (
       'VALIDATION_ERROR'
     );
   }
-  if (!Number.isFinite(maxBoxes) || maxBoxes <= 0) {
-    throw new apiClient.ApiClientError(
-      'maxBoxes debe ser un número positivo',
-      'VALIDATION_ERROR'
-    );
+  if (maxBoxes !== undefined) {
+    if (!Number.isFinite(maxBoxes) || maxBoxes <= 0) {
+      throw new apiClient.ApiClientError(
+        'maxBoxes debe ser un número positivo',
+        'VALIDATION_ERROR'
+      );
+    }
   }
 
   // Make the API request
   try {
-    const response = await apiClient.post<any>('/createPallet', {
-      codigo: base,
-      maxBoxes,
-    });
+    const body: any = { codigo: base };
+    if (maxBoxes !== undefined) {
+      body.maxBoxes = maxBoxes;
+    }
+    const response = await apiClient.post<any>('/createPallet', body);
 
     return response;
   } catch (error) {

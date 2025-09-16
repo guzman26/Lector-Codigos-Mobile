@@ -12,7 +12,7 @@ export interface PalletFormData {
   calibre: string;
   formato: string;
   empresa: string;
-  maxBoxes: number;
+  maxBoxes: string; // optional input; empty means not sent
   codigoManual: string;
   useManualCode: boolean;
 }
