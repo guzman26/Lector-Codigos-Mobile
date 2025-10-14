@@ -127,7 +127,7 @@ export const CreatePalletForm: React.FC<CreatePalletFormProps> = ({
 
             <div className='form-group'>
               <label htmlFor='maxBoxes' className='form-label'>
-                Capacidad de cajas (maxBoxes)
+                Capacidad de cajas (máximo 60)
               </label>
               <input
                 type='number'
@@ -137,8 +137,8 @@ export const CreatePalletForm: React.FC<CreatePalletFormProps> = ({
                 onChange={handleInputChange}
                 className='form-input'
                 min={1}
-                max={999}
-                placeholder='48'
+                max={60}
+                placeholder='60'
               />
               {errors.maxBoxes && (
                 <span className='error-text'>{errors.maxBoxes}</span>

@@ -250,9 +250,15 @@ export const usePalletForm = (
       }));
 
       try {
-        const maxBoxesNum = state.formData.maxBoxes
+        let maxBoxesNum = state.formData.maxBoxes
           ? Number(state.formData.maxBoxes)
           : undefined;
+        
+        // Limitar a máximo 60 cajas
+        if (maxBoxesNum !== undefined && maxBoxesNum > 60) {
+          maxBoxesNum = 60;
+        }
+        
         const response = await createPallet(baseCodeToSubmit, maxBoxesNum);
 
         if (response.success) {
