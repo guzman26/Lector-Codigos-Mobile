@@ -44,7 +44,7 @@ export type {
   GenerateReportParams,
 } from './types';
 
-// Endpoints (Backward Compatible - uses endpointsAdapter)
+// Endpoints (Clean Architecture)
 export {
   endpoints,
   getInfoFromScannedCode,
@@ -59,10 +59,10 @@ export {
   createPallet,
   togglePalletStatus,
   submitPalletStatusToggle,
-} from './endpointsAdapter';
+} from './endpoints';
 
-// Pallets helpers (Backward Compatible)
-export { pallets, getActivePallets, closePallet } from './endpointsAdapter';
+// Pallets helpers
+export { pallets, getActivePallets, closePallet } from './endpoints';
 
 // Utilities (re-export for convenience)
 export {
