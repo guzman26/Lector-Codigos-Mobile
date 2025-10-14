@@ -173,7 +173,7 @@ export interface TogglePalletStatusResult {
  * Move Pallet Request
  */
 export interface MovePalletRequest {
-  codigo: string; // 13-digit pallet code
+  codigo: string; // 14-digit pallet code
   ubicacion: string; // Nueva ubicación (ej. TRANSITO)
 }
 

@@ -200,9 +200,9 @@ export const validatePalletCodeDetailed = (code: string): {
 };
 
 /**
- * Validates if a code is a valid pallet code (13 digits)
- * Format: D-SS-AA-H-CC-F-E-CCC
- * D=Día, SS=Semana, AA=Año, H=Horario, CC=Calibre, F=Formato, E=Empresa, CCC=Contador
+ * Validates if a code is a valid pallet code (14 digits)
+ * Format: D-SS-AA-H-CC-F-EE-CCC
+ * D=Día, SS=Semana, AA=Año, H=Horario, CC=Calibre, F=Formato, EE=Empresa, CCC=Contador
  */
 export const isValidPalletCode = (code: string): boolean => {
   if (!code || typeof code !== 'string') return false;

@@ -69,7 +69,7 @@ const SendPalletToTransit: React.FC = () => {
           ← Volver
         </button>
         <h1>Enviar Pallet a TRANSITO</h1>
-        <p>Escanea o ingresa el código del pallet (13 dígitos)</p>
+        <p>Escanea o ingresa el código del pallet (14 dígitos)</p>
 
         {/* Toggle Scanner Mode */}
         <div className='scanner-mode-toggle'>
@@ -132,14 +132,14 @@ const SendPalletToTransit: React.FC = () => {
               placeholder={
                 scanMode
                   ? 'Escanea códigos consecutivamente...'
-                  : 'Escanea o ingresa código de 13 dígitos'
+                  : 'Escanea o ingresa código de 14 dígitos'
               }
               className={`form-input code-input ${
                 showValidationError || showTypeError ? 'error' : ''
               } ${scanMode ? 'scanner-mode' : ''}`}
               disabled={loading}
               autoFocus
-              maxLength={13}
+              maxLength={14}
             />
 
             {showValidationError && (
@@ -151,7 +151,7 @@ const SendPalletToTransit: React.FC = () => {
             {showTypeError && (
               <span className='validation-error'>
                 Este código es de una caja. Solo se permiten códigos de pallet
-                (13 dígitos).
+                (14 dígitos).
               </span>
             )}
 
@@ -168,7 +168,7 @@ const SendPalletToTransit: React.FC = () => {
             <h4>Información</h4>
             <ul>
               <li>• Ubicación destino: <strong>TRANSITO</strong></li>
-              <li>• Solo códigos de pallet (13 dígitos)</li>
+              <li>• Solo códigos de pallet (14 dígitos)</li>
               <li>• Presiona <kbd>Enter</kbd> para procesar</li>
               {scanMode ? (
                 <li>

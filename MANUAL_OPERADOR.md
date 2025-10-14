@@ -91,7 +91,7 @@ INICIO
   ↓
 3. ESCANEA o ESCRIBE el código:
    • Caja: 16 dígitos (ejemplo: 1234567890123456)
-   • Pallet: 13 dígitos (ejemplo: 1234567890123)
+   • Pallet: 14 dígitos (ejemplo: 53925101101000)
   ↓
 4. Toca "🔍 Buscar" o presiona ENTER
   ↓
@@ -268,7 +268,7 @@ FIN
 
 ### 💡 Información importante:
 - **Código base**: 11 dígitos que identifican el pallet
-- **Código completo**: 13 dígitos (el sistema agrega 2 dígitos al final)
+- **Código completo**: 14 dígitos (el sistema agrega 3 dígitos al final)
 - **Máximo de cajas**: Límite de cajas que puede tener el pallet
 - **Estado inicial**: El pallet se crea ABIERTO automáticamente
 
@@ -370,7 +370,7 @@ INICIO
    │ 🎯 Escanea el código del      │
    │    pallet a mover              │
    │                                │
-   │ [13 dígitos]                   │
+   │ [14 dígitos]                   │
    │                                │
    └────────────────────────────────┘
   ↓
@@ -382,7 +382,7 @@ INICIO
   ↓
 4. VES LA INFORMACIÓN:
    ┌────────────────────────────────┐
-   │ Pallet: 1234567890123          │
+   │ Pallet: 53925101101000         │
    │ Estado actual: PACKING         │
    │ Cajas: 45                      │
    │ Estado: Cerrado                │
@@ -454,13 +454,13 @@ INICIO
    ┌────────────────────────────────┐
    │ PALLETS ACTIVOS EN BODEGA      │
    │                                │
-   │ 📦 1234567890123               │
+   │ 📦 53925101101000              │
    │    Estado: 🔓 Abierto          │
    │    Cajas: 45 / 100             │
    │    Creado: hace 3 horas        │
    │    [Ver] [Cerrar]              │
    │                                │
-   │ 📦 9876543210987               │
+   │ 📦 53925201102000              │
    │    Estado: 🔓 Abierto          │
    │    Cajas: 78 / 100             │
    │    Creado: hace 1 hora         │
@@ -481,7 +481,7 @@ INICIO
    ┌────────────────────────────────┐
    │ ⚠️ ¿Cerrar pallet?             │
    │                                │
-   │ Pallet: 1234567890123          │
+   │ Pallet: 53925101101000         │
    │ Cajas actuales: 45             │
    │                                │
    │ Una vez cerrado, NO podrás     │
@@ -714,8 +714,8 @@ apagado. Terminal: TRM-003"
 | Tipo | Dígitos | Ejemplo | Uso |
 |------|---------|---------|-----|
 | **Caja** | 16 | 1234567890123456 | Identificar una caja |
-| **Pallet Completo** | 13 | 1234567890123 | Identificar un pallet |
-| **Pallet Base** | 11 | 12345678901 | Crear nuevo pallet |
+| **Pallet Completo** | 14 | 53925101101000 | Identificar un pallet |
+| **Pallet Base** | 11 | 53925101101 | Crear nuevo pallet |
 
 ### ✅ Checklist Diario
 

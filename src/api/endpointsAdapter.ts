@@ -529,7 +529,7 @@ export const movePallet = async (
 
   if (!validation.isValid || validation.type !== 'pallet') {
     throw new apiClient.ApiClientError(
-      'El código debe ser un código de pallet válido (13 dígitos)',
+      'El código debe ser un código de pallet válido (14 dígitos)',
       'VALIDATION_ERROR'
     );
   }
