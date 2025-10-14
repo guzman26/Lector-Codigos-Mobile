@@ -5,6 +5,9 @@ export const API_BASE_URL =
 // API Client and Configuration
 export { apiClient, ApiClientError } from './apiClient';
 
+// NEW: Consolidated API Client (Clean Architecture)
+export { consolidatedApi, inventoryApi, salesApi, adminApi, healthCheck } from './consolidatedClient';
+
 // Types and Interfaces
 export type {
   ApiResponse,
@@ -17,9 +20,31 @@ export type {
   RegisterBoxResult,
   ProcessScanRequest,
   ProcessScanResult,
+  // NEW: Clean Architecture Types
+  ConsolidatedApiRequest,
+  StandardApiResponse,
+  PaginationParams,
+  PaginatedResponse,
+  FilterParams,
+  GetBoxesParams,
+  CreateBoxParams,
+  AssignBoxParams,
+  MoveBoxParams,
+  GetPalletsParams,
+  CreatePalletParams,
+  ClosePalletParams,
+  MovePalletParams,
+  GetOrdersParams,
+  CreateOrderParams,
+  GetCustomersParams,
+  CreateCustomerParams,
+  GetIssuesParams,
+  CreateIssueParams,
+  UpdateIssueParams,
+  GenerateReportParams,
 } from './types';
 
-// Endpoints
+// Endpoints (Backward Compatible - uses endpointsAdapter)
 export {
   endpoints,
   getInfoFromScannedCode,
@@ -29,10 +54,15 @@ export {
   submitScan,
   movePallet,
   submitMovePallet,
-} from './endpoints';
+  postIssue,
+  submitIssueReport,
+  createPallet,
+  togglePalletStatus,
+  submitPalletStatusToggle,
+} from './endpointsAdapter';
 
-// Pallets helpers
-export { pallets, getActivePallets, closePallet } from './endpoints';
+// Pallets helpers (Backward Compatible)
+export { pallets, getActivePallets, closePallet } from './endpointsAdapter';
 
 // Utilities (re-export for convenience)
 export {

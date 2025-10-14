@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useScannedCodeContext } from '../../context/ScannedCodeContext';
-import { submitIssueReport } from '../../api/endpoints';
+import { submitIssueReport } from '../../api';
 import { validateIssueDescription } from '../../utils/validators';
 import './ReportIssueModal.css';
 

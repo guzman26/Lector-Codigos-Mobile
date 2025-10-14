@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { createPallet } from '../api/endpoints';
+import { createPallet } from '../api';
 import { isValidPalletBaseCode } from '../utils/validators';
 import type {
   PalletFormData,

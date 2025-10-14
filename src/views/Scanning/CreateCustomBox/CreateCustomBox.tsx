@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { processScan } from '../../../api/endpoints';
+import { processScan } from '../../../api';
 import { validateScannedCode } from '../../../utils/validators';
 import './CreateCustomBox.css';
 import { useNavigate } from 'react-router-dom';

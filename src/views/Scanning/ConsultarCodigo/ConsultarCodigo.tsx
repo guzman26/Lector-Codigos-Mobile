@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScannedCodeInfo } from '../../../api/types';
 import { validateScannedCode } from '../../../utils/validators';
-import { submitPalletStatusToggle } from '../../../api/endpoints';
+import { submitPalletStatusToggle } from '../../../api';
 import './ConsultarCodigo.css';
 import { useNavigate } from 'react-router-dom';
 import { useScannedCodeContext } from '../../../context/ScannedCodeContext';
