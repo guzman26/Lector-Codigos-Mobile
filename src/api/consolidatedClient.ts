@@ -359,6 +359,33 @@ export const adminApi = {
       return makeConsolidatedRequest('/admin', 'config', 'update', params);
     },
   },
+
+  /**
+   * Bulk operations (dangerous!)
+   */
+  bulk: {
+    /**
+     * Delete boxes in bulk
+     */
+    deleteBoxes: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/admin', 'bulk', 'delete-boxes', params);
+    },
+
+    /**
+     * Delete pallets in bulk
+     */
+    deletePallets: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/admin', 'bulk', 'delete-pallets', params);
+    },
+
+    /**
+     * Delete all pallets and their assigned boxes
+     * ⚠️ WARNING: This is a dangerous operation!
+     */
+    deletePalletsAndBoxes: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/admin', 'bulk', 'delete-pallets-and-boxes', params);
+    },
+  },
 };
 
 /**
