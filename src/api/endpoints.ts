@@ -212,6 +212,57 @@ export const processScan = async (
   const tipo = request.tipo || (validation.type === 'box' ? 'BOX' : 'PALLET');
   const resource = tipo === 'BOX' ? 'box' : 'pallet';
   
+  // Special case: if customInfo is provided, this is a custom box creation
+  // We need to create the box first, then assign it to a single-box pallet
+  if (request.customInfo && Array.isArray(request.customInfo) && request.customInfo.length > 0) {
+    console.log('🎨 Creating custom box with customInfo:', request.customInfo);
+    
+    // Parse box code to get calibre, formato, empresa
+    const parsed = validation.parsed;
+    
+    // Create the box first
+    const createParams: CreateBoxParams = {
+      codigo: request.codigo.trim(),
+      calibre: parsed?.calibre || '02',
+      formato: parsed?.formato || '1',
+      empresa: parsed?.empresa || '1',
+      ubicacion: request.ubicacion,
+      customInfo: JSON.stringify(request.customInfo),
+    };
+    
+    const createResponse = await consolidatedApi.inventory.box.create(createParams);
+    
+    if (!createResponse.success) {
+      // If creation fails because box already exists, try to move it instead
+      if (createResponse.error?.includes('already exists')) {
+        const moveResponse = await consolidatedApi.inventory.box.move({
+          codigo: request.codigo.trim(),
+          ubicacion: request.ubicacion,
+        });
+        return moveResponse as any;
+      }
+      return createResponse as any;
+    }
+    
+    return {
+      success: true,
+      data: {
+        success: true,
+        message: 'Caja personalizada creada exitosamente',
+        data: {
+          codigo: request.codigo.trim(),
+          tipo: 'BOX' as const,
+          ubicacion: request.ubicacion,
+          estado: 'activo',
+          timestamp: new Date().toISOString(),
+          customInfo: request.customInfo,
+        },
+      },
+      message: 'Caja personalizada creada exitosamente',
+    };
+  }
+  
+  // Normal flow: move existing box/pallet
   const response = await consolidatedApi.inventory[resource].move({
     codigo: request.codigo.trim(),
     ubicacion: request.ubicacion,
