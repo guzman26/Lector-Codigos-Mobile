@@ -218,14 +218,14 @@ export const processScan = async (
     console.log('🎨 Creating custom box with customInfo:', request.customInfo);
     
     // Parse box code to get calibre, formato, empresa
-    const parsed = validation.parsed;
+    const codigo = request.codigo.trim();
     
     // Create the box first
     const createParams: CreateBoxParams = {
-      codigo: request.codigo.trim(),
-      calibre: parsed?.calibre || '02',
-      formato: parsed?.formato || '1',
-      empresa: parsed?.empresa || '1',
+      codigo,
+      calibre: codigo.substr(9, 2),
+      formato: codigo.substr(11, 1),
+      empresa: codigo.substr(12, 1),
       ubicacion: request.ubicacion,
       customInfo: JSON.stringify(request.customInfo),
     };
