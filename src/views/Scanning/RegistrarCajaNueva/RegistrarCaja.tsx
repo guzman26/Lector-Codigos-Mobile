@@ -80,8 +80,8 @@ const RegistrarCaja: React.FC = () => {
         <button onClick={handleBack} className='back-btn'>
           ← Volver
         </button>
-        <h1>Escanear Nueva Caja</h1>
-        <p>Escanea o ingresa el código de la nueva caja para PACKING</p>
+        <h1>Escanear Nueva Caja o Carro</h1>
+        <p>Escanea o ingresa el código de la nueva caja o carro para PACKING</p>
 
         {/* Toggle Scanner Mode */}
         <div className='scanner-mode-toggle'>
@@ -122,19 +122,31 @@ const RegistrarCaja: React.FC = () => {
           <div className='success-message'>
             <span className='success-icon'>✅</span>
             <div className='success-content'>
-              <h3>¡Caja procesada exitosamente!</h3>
+              <h3>
+                {data.data?._isCart
+                  ? '¡Carro procesado exitosamente!'
+                  : '¡Caja procesada exitosamente!'}
+              </h3>
               <div className='success-details'>
                 <p>
                   <strong>Código:</strong> {data.data?.codigo}
                 </p>
                 <p>
-                  <strong>Ubicación:</strong> {data.data?.ubicacion}
+                  <strong>Tipo:</strong>{' '}
+                  {data.data?._isCart ? 'Carro' : 'Caja'}
                 </p>
                 <p>
-                  <strong>Estado:</strong> {data.data?.estado}
+                  <strong>Ubicación:</strong> {data.data?.ubicacion}
                 </p>
+                {data.data?.estado && (
+                  <p>
+                    <strong>Estado:</strong> {data.data?.estado}
+                  </p>
+                )}
               </div>
-              <p className='success-note'>Puede escanear otra caja</p>
+              <p className='success-note'>
+                Puede escanear otra caja o carro
+              </p>
             </div>
           </div>
         </div>
@@ -144,7 +156,7 @@ const RegistrarCaja: React.FC = () => {
         <div className='form-section'>
           <div className='form-group'>
             <label htmlFor='codigo' className='form-label'>
-              Código de Caja
+              Código de Caja o Carro
             </label>
             <input
               ref={inputRef}
@@ -166,7 +178,7 @@ const RegistrarCaja: React.FC = () => {
               placeholder={
                 scanBoxMode
                   ? 'Escanea códigos consecutivamente...'
-                  : 'Escanea o ingresa código de 16 dígitos'
+                  : 'Escanea o ingresa código de caja/carro (16 dígitos)'
               }
               className={`form-input code-input ${showValidationError || showTypeError ? 'error' : ''} ${scanBoxMode ? 'scanner-mode' : ''}`}
               disabled={loading}
@@ -182,7 +194,7 @@ const RegistrarCaja: React.FC = () => {
 
             {showTypeError && (
               <span className='validation-error'>
-                Este código es de un pallet. Solo se permiten códigos de caja
+                Este código es de un pallet. Solo se permiten códigos de caja o carro
                 (16 dígitos).
               </span>
             )}
@@ -191,7 +203,7 @@ const RegistrarCaja: React.FC = () => {
               validation.isValid &&
               validation.type === 'box' && (
                 <span className='validation-success'>
-                  ✓ Código válido - Presiona Enter para procesar
+                  ✓ Código válido (caja o carro) - Presiona Enter para procesar
                 </span>
               )}
           </div>
@@ -202,7 +214,12 @@ const RegistrarCaja: React.FC = () => {
               <li>
                 • Ubicación: <strong>PACKING</strong> (automática)
               </li>
-              <li>• Solo códigos de caja (16 dígitos)</li>
+              <li>
+                • Solo códigos de caja o carro (16 dígitos)
+              </li>
+              <li>
+                • El sistema detecta automáticamente si es caja o carro según el formato
+              </li>
               <li>
                 • Presiona <kbd>Enter</kbd> para procesar
               </li>
@@ -230,7 +247,7 @@ const RegistrarCaja: React.FC = () => {
                 className='test-btn'
                 disabled={loading}
               >
-                Caja: 1234567890123456
+                Caja/Carro: 1234567890123456
               </button>
               <button
                 type='button'
@@ -238,7 +255,7 @@ const RegistrarCaja: React.FC = () => {
                 className='test-btn'
                 disabled={loading}
               >
-                Caja: 9876543210987654
+                Caja/Carro: 9876543210987654
               </button>
             </div>
           </div>
@@ -248,7 +265,7 @@ const RegistrarCaja: React.FC = () => {
       {loading && (
         <div className='loading-overlay'>
           <div className='loading-spinner'></div>
-          <p>Procesando caja...</p>
+          <p>Procesando caja o carro...</p>
         </div>
       )}
     </div>
