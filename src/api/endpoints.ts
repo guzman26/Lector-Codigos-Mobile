@@ -551,6 +551,71 @@ export const submitMovePallet = async (
 };
 
 /**
+ * Move a cart to a new location
+ */
+export const moveCart = async (
+  codigo: string,
+  ubicacion: string
+): Promise<ApiResponse<MovePalletResult>> => {
+  const cleanCode = (codigo || '').trim();
+
+  if (!/^\d{16}$/.test(cleanCode)) {
+    throw new apiClient.ApiClientError(
+      'El código debe ser un código de carro válido (16 dígitos)',
+      'VALIDATION_ERROR'
+    );
+  }
+
+  const validLocations = ['PACKING', 'TRANSITO', 'BODEGA', 'PREVENTA', 'VENTA'];
+  if (!validLocations.includes(ubicacion)) {
+    throw new apiClient.ApiClientError(
+      'Ubicación inválida',
+      'VALIDATION_ERROR'
+    );
+  }
+
+  const response = await consolidatedApi.inventory.cart.move({
+    codigo: cleanCode,
+    ubicacion,
+  });
+
+  if (response.success) {
+    return {
+      success: true,
+      data: {
+        success: true,
+        message: response.message || 'Carro movido exitosamente',
+        data: {
+          codigo: cleanCode,
+          ubicacion,
+          estado: 'activo',
+          timestamp: new Date().toISOString(),
+        },
+      },
+      message: response.message,
+    };
+  }
+
+  return response as ApiResponse<MovePalletResult>;
+};
+
+export const submitMoveCart = async (
+  codigo: string,
+  ubicacion: string = 'TRANSITO'
+): Promise<MovePalletResult> => {
+  const response = await moveCart(codigo, ubicacion);
+
+  if (!response.success || !response.data) {
+    throw new apiClient.ApiClientError(
+      response.error || 'No se pudo mover el carro',
+      'NO_DATA'
+    );
+  }
+
+  return response.data;
+};
+
+/**
  * Endpoints object for easy access
  */
 export const endpoints = {
@@ -566,6 +631,8 @@ export const endpoints = {
   submitPalletStatusToggle,
   movePallet,
   submitMovePallet,
+  moveCart,
+  submitMoveCart,
 } as const;
 
 /**

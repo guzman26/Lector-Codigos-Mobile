@@ -167,6 +167,25 @@ export const inventoryApi = {
       return makeConsolidatedRequest('/inventory', 'pallet', 'delete', params);
     },
   },
+
+  /**
+   * Cart operations
+   */
+  cart: {
+    /**
+     * Get carts with optional filters and pagination
+     */
+    get: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/inventory', 'cart', 'get', params);
+    },
+
+    /**
+     * Move a cart to a different location
+     */
+    move: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/inventory', 'cart', 'move', params);
+    },
+  },
 };
 
 /**

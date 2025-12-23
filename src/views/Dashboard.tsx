@@ -142,7 +142,12 @@ const Dashboard: React.FC = () => {
           <span className='btn-text'>Enviar Pallet a Transito</span>
         </button>
 
-
+        <button
+          className='action-btn'
+          onClick={() => navigate('/enviar-carro-transito')}
+        >
+          <span className='btn-text'>Enviar Carro a Transito</span>
+        </button>
 
         <button
           className='action-btn'

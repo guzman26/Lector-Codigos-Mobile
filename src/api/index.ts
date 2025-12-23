@@ -54,6 +54,8 @@ export {
   submitScan,
   movePallet,
   submitMovePallet,
+  moveCart,
+  submitMoveCart,
   postIssue,
   submitIssueReport,
   createPallet,
