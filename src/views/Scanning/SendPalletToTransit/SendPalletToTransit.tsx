@@ -53,10 +53,6 @@ const SendPalletToTransit: React.FC = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSubmit();
-  };
-
   const validation = validateScannedCode(codigo);
   const showValidationError = codigo.length > 0 && !validation.isValid;
   const showTypeError =
@@ -128,7 +124,6 @@ const SendPalletToTransit: React.FC = () => {
               id='codigo'
               value={codigo}
               onChange={e => setCodigo(e.target.value)}
-              onKeyPress={handleKeyPress}
               placeholder={
                 scanMode
                   ? 'Escanea códigos consecutivamente...'

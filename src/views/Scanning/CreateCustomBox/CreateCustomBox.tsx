@@ -93,12 +93,6 @@ export const CreateCustomBox: React.FC<CreateCustomBoxProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleScanSubmit();
-    }
-  };
-
   const removeScannedEntry = (index: number) => {
     setScannedEntries(prev => prev.filter((_, i) => i !== index));
   };
@@ -217,7 +211,6 @@ export const CreateCustomBox: React.FC<CreateCustomBoxProps> = ({
                 id="scanCode"
                 value={currentScanCode}
                 onChange={(e) => setCurrentScanCode(e.target.value)}
-                onKeyDown={handleKeyDown}
                 placeholder="Escanee código de 16 dígitos"
                 maxLength={16}
                 disabled={scanLoading || isSubmitting}

@@ -91,12 +91,6 @@ const ConsultarCodigo: React.FC = () => {
     inputRef.current?.focus();
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSubmit(e as any);
-    }
-  };
-
   const handleBack = () => {
     navigate('/dashboard');
   };
@@ -245,7 +239,6 @@ const ConsultarCodigo: React.FC = () => {
                 type='text'
                 value={codigo}
                 onChange={e => setCodigo(e.target.value)}
-                onKeyPress={handleKeyPress}
                 placeholder='Escanea o ingresa el código (12 o 15 dígitos)'
                 className='search-input'
                 disabled={loading}

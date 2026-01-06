@@ -34,12 +34,6 @@ const RegistrarCaja: React.FC = () => {
     });
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSubmit();
-    }
-  };
-
   const handleBack = () => {
     navigate('/dashboard');
   };
@@ -164,7 +158,6 @@ const RegistrarCaja: React.FC = () => {
               id='codigo'
               value={codigo}
               onChange={e => setCodigo(e.target.value)}
-              onKeyPress={handleKeyPress}
               onBlur={() => {
                 // Si está en modo scanner, volver a enfocar después de un breve delay
                 if (scanBoxMode) {
