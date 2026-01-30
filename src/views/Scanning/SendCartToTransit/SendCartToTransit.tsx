@@ -1,16 +1,39 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getErrorMessage } from '../../../utils/errorHandler';
 import { submitMoveCart } from '../../../api';
-import './SendCartToTransit.css';
+import { useScanMode } from '../../../hooks/useScanMode';
+import {
+  CART_CODE_LENGTH,
+  TRANSIT_LOCATION,
+} from '../../../api/inventoryConstants';
+import {
+  Box,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Alert,
+} from '../../../components/ui';
 
-/**
- * Validates if a code is a valid cart code (16 digits)
- */
-const isValidCartCode = (code: string): boolean => {
-  if (!code || typeof code !== 'string') return false;
-  const cleanCode = code.trim();
-  return /^\d{16}$/.test(cleanCode);
-};
+const TITLE = 'Enviar Carro a TRANSITO';
+const DESCRIPTION = `Escanea o ingresa el código del carro (${CART_CODE_LENGTH} dígitos)`;
+const LABEL = 'Código de Carro';
+const PLACEHOLDER_SCAN = 'Escanea códigos consecutivamente...';
+const PLACEHOLDER_MANUAL = `Escanea o ingresa código de ${CART_CODE_LENGTH} dígitos`;
+const ERROR_INVALID_CODE = `El código debe tener ${CART_CODE_LENGTH} dígitos numéricos`;
+const SUCCESS_DEFAULT = 'Carro movido exitosamente';
+const SUCCESS_DEST = 'Carro enviado a TRANSITO';
+const SUBMIT_LABEL = 'Enviar a TRANSITO';
+const SUBMIT_LOADING = 'Enviando carro...';
+const ERROR_DEFAULT = 'Error al mover el carro';
+const HELPER_VALID = '✓ Código válido - Presiona Enter para enviar';
+
+const cartCodeRegex = new RegExp(`^\\d{${CART_CODE_LENGTH}}$`);
+
+function isValidCartCode(code: string): boolean {
+  return cartCodeRegex.test(code.trim());
+}
 
 const SendCartToTransit: React.FC = () => {
   const navigate = useNavigate();
@@ -18,16 +41,7 @@ const SendCartToTransit: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [scanMode, setScanMode] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const toggleScanMode = () => setScanMode(prev => !prev);
-
-  useEffect(() => {
-    if (scanMode && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [scanMode]);
+  const { scanMode, toggleScanMode, inputRef } = useScanMode();
 
   const handleBack = () => navigate('/dashboard');
 
@@ -38,7 +52,7 @@ const SendCartToTransit: React.FC = () => {
     if (!cleanCode) return;
 
     if (!isValidCartCode(cleanCode)) {
-      setError('Código de carro inválido. Debe tener 16 dígitos.');
+      setError(ERROR_INVALID_CODE);
       return;
     }
 
@@ -47,152 +61,116 @@ const SendCartToTransit: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      const result = await submitMoveCart(cleanCode, 'TRANSITO');
-      setSuccessMessage(result.message || 'Carro movido exitosamente');
+      const result = await submitMoveCart(cleanCode, TRANSIT_LOCATION);
+      setSuccessMessage(result.message || SUCCESS_DEFAULT);
       setCodigo('');
       if (scanMode && inputRef.current) {
         inputRef.current.focus();
       }
-    } catch (err: any) {
-      setError(err.message || 'Error al mover el carro');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, ERROR_DEFAULT));
     } finally {
       setLoading(false);
     }
   };
 
-  const isCodeValid = isValidCartCode(codigo);
-  const showValidationError = codigo.length > 0 && !isCodeValid && codigo.length < 16;
-  const showLengthError = codigo.length > 0 && codigo.length === 14;
+  const showValidationError = codigo.length > 0 && !isValidCartCode(codigo);
+  const isValid = codigo.length > 0 && isValidCartCode(codigo);
 
   return (
-    <div className='send-pallet-content'>
-      <div className='send-pallet-header'>
-        <button onClick={handleBack} className='back-btn'>
+    <Box>
+      <Stack spacing={2} mb={2}>
+        <Button variant="outlined" size="small" onClick={handleBack}>
           ← Volver
-        </button>
-        <h1>Enviar Carro a TRANSITO</h1>
-        <p>Escanea o ingresa el código del carro (16 dígitos)</p>
+        </Button>
+        <Typography variant="h5">{TITLE}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          {DESCRIPTION}
+        </Typography>
 
-        <div className='scanner-mode-toggle'>
-          <button
-            onClick={toggleScanMode}
-            className={`toggle-btn ${scanMode ? 'active' : ''}`}
-            disabled={loading}
-          >
-            <span className='toggle-icon'>{scanMode ? '📱' : '⚡'}</span>
-            <span className='toggle-text'>
-              {scanMode ? 'Modo Scanner: ON' : 'Modo Scanner: OFF'}
-            </span>
-          </button>
-          {scanMode && (
-            <p className='scanner-mode-info'>
-              🔍 Modo scanner activo - El campo permanecerá enfocado para escaneo
-              consecutivo
-            </p>
-          )}
-        </div>
-      </div>
+        <Button
+          variant={scanMode ? 'contained' : 'outlined'}
+          size="small"
+          onClick={toggleScanMode}
+          disabled={loading}
+        >
+          {scanMode ? '📱 Modo Scanner: ON' : '⚡ Modo Scanner: OFF'}
+        </Button>
+        {scanMode && (
+          <Typography variant="caption" color="text.secondary">
+            🔍 Modo scanner activo - El campo permanecerá enfocado para escaneo
+            consecutivo
+          </Typography>
+        )}
+      </Stack>
 
       {error && (
-        <div className='error-section'>
-          <div className='error-message'>
-            <span className='error-icon'>⚠️</span>
-            <span className='error-text'>{error}</span>
-            <button onClick={() => setError(null)} className='error-close'>
-              ✕
-            </button>
-          </div>
-        </div>
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
       )}
 
       {successMessage && (
-        <div className='success-section'>
-          <div className='success-message'>
-            <span className='success-icon'>✅</span>
-            <div className='success-content'>
-              <h3>{successMessage}</h3>
-              <p>Carro enviado a TRANSITO</p>
-            </div>
-          </div>
-        </div>
+        <Alert severity="success" sx={{ mb: 2 }}>
+          <Typography variant="subtitle2">{successMessage}</Typography>
+          <Typography variant="body2">{SUCCESS_DEST}</Typography>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className='scan-form'>
-        <div className='form-section'>
-          <div className='form-group'>
-            <label htmlFor='codigo' className='form-label'>
-              Código de Carro
-            </label>
-            <input
-              ref={inputRef}
-              type='text'
-              id='codigo'
-              value={codigo}
-              onChange={e => setCodigo(e.target.value)}
-              placeholder={
-                scanMode
-                  ? 'Escanea códigos consecutivamente...'
-                  : 'Escanea o ingresa código de 16 dígitos'
-              }
-              className={`form-input code-input ${
-                showValidationError || showLengthError ? 'error' : ''
-              } ${scanMode ? 'scanner-mode' : ''}`}
-              disabled={loading}
-              autoFocus
-              maxLength={16}
-            />
+      <form onSubmit={handleSubmit}>
+        <Stack spacing={1} mb={2}>
+          <TextField
+            inputRef={inputRef}
+            label={LABEL}
+            value={codigo}
+            onChange={e => setCodigo(e.target.value)}
+            placeholder={
+              scanMode ? PLACEHOLDER_SCAN : PLACEHOLDER_MANUAL
+            }
+            error={showValidationError}
+            helperText={
+              showValidationError
+                ? ERROR_INVALID_CODE
+                : isValid
+                  ? HELPER_VALID
+                  : undefined
+            }
+            disabled={loading}
+            autoFocus
+            inputProps={{ maxLength: CART_CODE_LENGTH }}
+            fullWidth
+          />
+        </Stack>
 
-            {showLengthError && (
-              <span className='validation-error'>
-                Este código parece ser de un pallet (14 dígitos). Solo se permiten códigos de carro
-                (16 dígitos).
-              </span>
-            )}
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          component="div"
+          sx={{ mb: 2 }}
+        >
+          <strong>Ubicación destino:</strong> {TRANSIT_LOCATION} · Solo códigos
+          de carro ({CART_CODE_LENGTH} dígitos) · Presiona Enter para procesar
+          {scanMode ? (
+            <span> · Modo Scanner: campo siempre enfocado</span>
+          ) : (
+            <span>
+              {' '}
+              · Activa Modo Scanner para escaneo con dispositivo físico
+            </span>
+          )}
+        </Typography>
 
-            {showValidationError && !showLengthError && (
-              <span className='validation-error'>
-                El código debe tener 16 dígitos numéricos.
-              </span>
-            )}
-
-            {codigo.length > 0 && isCodeValid && (
-              <span className='validation-success'>
-                ✓ Código válido - Presiona Enter para enviar
-              </span>
-            )}
-          </div>
-
-          <div className='info-box'>
-            <h4>Información</h4>
-            <ul>
-              <li>• Ubicación destino: <strong>TRANSITO</strong></li>
-              <li>• Solo códigos de carro (16 dígitos)</li>
-              <li>• Presiona <kbd>Enter</kbd> para procesar</li>
-              {scanMode ? (
-                <li>
-                  • <strong>Modo Scanner:</strong> Campo siempre enfocado para
-                  escaneo consecutivo
-                </li>
-              ) : (
-                <li>
-                  • Activa el <strong>Modo Scanner</strong> para escaneo con
-                  dispositivo físico
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={loading || !codigo.trim()}
+          fullWidth
+        >
+          {loading ? SUBMIT_LOADING : SUBMIT_LABEL}
+        </Button>
       </form>
-
-      {loading && (
-        <div className='loading-overlay'>
-          <div className='loading-spinner'></div>
-          <p>Enviando carro...</p>
-        </div>
-      )}
-    </div>
+    </Box>
   );
 };
 
 export default SendCartToTransit;
-

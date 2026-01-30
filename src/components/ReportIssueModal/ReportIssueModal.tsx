@@ -2,7 +2,25 @@ import React, { useState } from 'react';
 import { useScannedCodeContext } from '../../context/ScannedCodeContext';
 import { submitIssueReport } from '../../api';
 import { validateIssueDescription } from '../../utils/validators';
-import './ReportIssueModal.css';
+import { error as logError } from '../../utils/logger';
+import { getErrorMessage } from '../../utils/errorHandler';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  IconButton,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Alert,
+  Box,
+  Typography,
+  Stack,
+} from '../ui';
 
 interface ReportIssueModalProps {
   isOpen: boolean;
@@ -17,10 +35,7 @@ interface IssueReport {
   terminalId: string;
 }
 
-const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
-  isOpen,
-  onClose,
-}) => {
+const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ isOpen, onClose }) => {
   const { data: lastScan } = useScannedCodeContext();
 
   const [formData, setFormData] = useState<IssueReport>({
@@ -51,59 +66,27 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
   ];
 
   const priorityLevels = [
-    {
-      value: 'low',
-      label: 'Baja',
-      color: '#28a745',
-      description: 'No bloquea operaciones',
-    },
-    {
-      value: 'medium',
-      label: 'Media',
-      color: '#ffc107',
-      description: 'Afecta eficiencia',
-    },
-    {
-      value: 'high',
-      label: 'Alta',
-      color: '#fd7e14',
-      description: 'Limita funcionalidad',
-    },
-    {
-      value: 'critical',
-      label: 'Crítica',
-      color: '#dc3545',
-      description: 'Bloquea operaciones',
-    },
+    { value: 'low', label: 'Baja', description: 'No bloquea operaciones' },
+    { value: 'medium', label: 'Media', description: 'Afecta eficiencia' },
+    { value: 'high', label: 'Alta', description: 'Limita funcionalidad' },
+    { value: 'critical', label: 'Crítica', description: 'Bloquea operaciones' },
   ];
 
   const handleInputChange = (field: keyof IssueReport, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    // Clear validation error when user starts typing
-    if (field === 'description' && validationError) {
-      setValidationError('');
-    }
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'description' && validationError) setValidationError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate description before submitting
     const validation = validateIssueDescription(formData.description);
     if (!validation.isValid) {
       setValidationError(validation.errorMessage || 'Descripción inválida');
       return;
     }
-
     setIsSubmitting(true);
     setValidationError('');
-
     try {
-      // Crear la descripción completa con toda la información del reporte
       const fullDescription = `
 Descripción: ${issueTypes.find(t => t.value === formData.type)?.label}
 Prioridad: ${priorityLevels.find(p => p.value === formData.priority)?.label}
@@ -116,54 +99,27 @@ ${formData.description.trim()}
 ---
 Reportado el: ${new Date().toLocaleString('es-ES')}
 `.trim();
-
-      // Llamar al endpoint de la API
       const result = await submitIssueReport(fullDescription);
-
-      // Sanitizar el resultado para evitar objetos en el render
       const sanitizedResult = {
-        id:
-          typeof result?.id === 'string'
-            ? result.id
-            : typeof result?.issueNumber === 'string'
-              ? result.issueNumber
-              : '',
-        mensaje:
-          typeof result?.mensaje === 'string'
-            ? result.mensaje
-            : typeof result?.message === 'string'
-              ? result.message
-              : '',
+        id: typeof result?.id === 'string' ? result.id : typeof result?.issueNumber === 'string' ? result.issueNumber : '',
+        mensaje: typeof result?.mensaje === 'string' ? result.mensaje : typeof result?.message === 'string' ? result.message : '',
         estado: result?.estado || 'recibido',
         fechaReporte: result?.fechaReporte || new Date().toISOString(),
       };
-
       setSubmitResult(sanitizedResult);
       setSubmitSuccess(true);
-
-      // Auto-cerrar después de 3 segundos (más tiempo para leer el ID)
-      setTimeout(() => {
-        handleClose();
-      }, 3000);
+      setTimeout(() => handleClose(), 3000);
     } catch (error) {
-      console.error('Error enviando reporte:', error);
-
+      logError('Error enviando reporte:', error);
       let errorMessage = 'Error enviando el reporte. Intenta nuevamente.';
-
-      if (error instanceof Error) {
-        if (
-          error.message.includes('NETWORK_ERROR') ||
-          error.message.includes('fetch')
-        ) {
-          errorMessage =
-            'Error de conexión. Verifica tu conexión a internet o contacta al administrador.';
-        } else if (error.message.includes('VALIDATION_ERROR')) {
-          errorMessage = 'Error de validación: ' + error.message;
-        } else {
-          errorMessage = `Error: ${error.message}`;
-        }
+      const errorMsg = getErrorMessage(error, '');
+      if (errorMsg.includes('NETWORK_ERROR') || errorMsg.includes('fetch')) {
+        errorMessage = 'Error de conexión. Verifica tu conexión a internet o contacta al administrador.';
+      } else if (errorMsg.includes('VALIDATION_ERROR')) {
+        errorMessage = 'Error de validación: ' + errorMsg;
+      } else if (errorMsg) {
+        errorMessage = `Error: ${errorMsg}`;
       }
-
       setValidationError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -186,179 +142,84 @@ Reportado el: ${new Date().toLocaleString('es-ES')}
     }
   };
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      handleClose();
-    }
-  };
-
-  if (!isOpen) return null;
-
   return (
-    <div className='modal-overlay' onClick={handleOverlayClick}>
-      <div className='modal-container'>
-        <div className='modal-header'>
-          <h2 className='modal-title'>🚨 Reportar Problema</h2>
-          <button
-            className='modal-close-btn'
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
-            ✕
-          </button>
-        </div>
-
-        {submitSuccess ? (
-          <div className='success-content'>
-            <div className='success-icon'>✅</div>
-            <h3>Reporte Enviado</h3>
-            <p>Tu reporte ha sido enviado exitosamente.</p>
-            {submitResult?.id && typeof submitResult.id === 'string' && (
-              <p>
-                <strong>ID del Reporte:</strong> {submitResult.id}
-              </p>
-            )}
-            {submitResult?.mensaje &&
-              typeof submitResult.mensaje === 'string' && (
-                <p>
-                  <em>{submitResult.mensaje}</em>
-                </p>
-              )}
-            <p>El equipo técnico será notificado.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className='modal-form'>
-            <div className='form-section'>
-              <label className='form-label'>Tipo de Problema</label>
-              <div className='issue-types-grid'>
-                {issueTypes.map(type => (
-                  <button
-                    key={type.value}
-                    type='button'
-                    className={`issue-type-btn ${formData.type === type.value ? 'active' : ''}`}
-                    onClick={() => handleInputChange('type', type.value)}
-                    disabled={isSubmitting}
-                  >
-                    <span className='issue-icon'>{type.icon}</span>
-                    <span className='issue-label'>{type.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className='form-section'>
-              <label className='form-label'>Prioridad</label>
-              <div className='priority-grid'>
-                {priorityLevels.map(priority => (
-                  <button
-                    key={priority.value}
-                    type='button'
-                    className={`priority-btn ${formData.priority === priority.value ? 'active' : ''}`}
-                    onClick={() =>
-                      handleInputChange('priority', priority.value)
-                    }
-                    disabled={isSubmitting}
-                    style={{
-                      borderColor:
-                        formData.priority === priority.value
-                          ? priority.color
-                          : undefined,
-                      backgroundColor:
-                        formData.priority === priority.value
-                          ? `${priority.color}15`
-                          : undefined,
-                    }}
-                  >
-                    <span
-                      className='priority-label'
-                      style={{ color: priority.color }}
-                    >
-                      {priority.label}
-                    </span>
-                    <span className='priority-description'>
-                      {priority.description}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className='form-section'>
-              <label className='form-label' htmlFor='description'>
-                Descripción del Problema *
-              </label>
-              <textarea
-                id='description'
-                className={`form-textarea ${validationError ? 'error' : ''}`}
+    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>🚨 Reportar Problema</span>
+        <IconButton aria-label="cerrar" onClick={handleClose} disabled={isSubmitting} size="small">
+          ✕
+        </IconButton>
+      </DialogTitle>
+      {submitSuccess ? (
+        <DialogContent>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>Reporte Enviado</Typography>
+            <Typography variant="body2">Tu reporte ha sido enviado exitosamente.</Typography>
+            {submitResult?.id && <Typography variant="body2"><strong>ID del Reporte:</strong> {submitResult.id}</Typography>}
+            {submitResult?.mensaje && <Typography variant="body2" component="em">{submitResult.mensaje}</Typography>}
+            <Typography variant="body2">El equipo técnico será notificado.</Typography>
+          </Alert>
+        </DialogContent>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <DialogContent>
+            {validationError && <Alert severity="error" sx={{ mb: 2 }}>{validationError}</Alert>}
+            <Stack spacing={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Tipo de Problema</InputLabel>
+                <Select
+                  value={formData.type}
+                  label="Tipo de Problema"
+                  onChange={e => handleInputChange('type', e.target.value)}
+                  disabled={isSubmitting}
+                >
+                  {issueTypes.map(t => (
+                    <MenuItem key={t.value} value={t.value}>{t.icon} {t.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth size="small">
+                <InputLabel>Prioridad</InputLabel>
+                <Select
+                  value={formData.priority}
+                  label="Prioridad"
+                  onChange={e => handleInputChange('priority', e.target.value)}
+                  disabled={isSubmitting}
+                >
+                  {priorityLevels.map(p => (
+                    <MenuItem key={p.value} value={p.value}>{p.label} – {p.description}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                label="Descripción del Problema *"
+                multiline
+                rows={4}
+                fullWidth
+                size="small"
                 value={formData.description}
                 onChange={e => handleInputChange('description', e.target.value)}
-                placeholder='Describe detalladamente el problema que estás experimentando...'
-                rows={4}
+                placeholder="Describe detalladamente el problema..."
+                error={Boolean(validationError)}
+                helperText={validationError || `${formData.description.length}/1000 caracteres`}
                 disabled={isSubmitting}
-                required
+                inputProps={{ maxLength: 1000 }}
               />
-              {validationError && (
-                <div className='validation-error'>{validationError}</div>
+              {formData.lastScannedCode && (
+                <TextField label="Último Código Escaneado" value={formData.lastScannedCode} size="small" fullWidth InputProps={{ readOnly: true }} helperText="Se incluirá en el reporte para contexto" />
               )}
-              <div className='character-count'>
-                {formData.description.length}/1000 caracteres
-              </div>
-            </div>
-
-            {formData.lastScannedCode && (
-              <div className='form-section'>
-                <label className='form-label'>Último Código Escaneado</label>
-                <div className='code-info'>
-                  <span className='code-display'>
-                    {formData.lastScannedCode}
-                  </span>
-                  <span className='code-note'>
-                    Se incluirá en el reporte para contexto
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <div className='form-section'>
-              <label className='form-label'>Terminal ID</label>
-              <input
-                type='text'
-                className='form-input'
-                value={formData.terminalId}
-                onChange={e => handleInputChange('terminalId', e.target.value)}
-                disabled={isSubmitting}
-                readOnly
-              />
-            </div>
-
-            <div className='modal-actions'>
-              <button
-                type='button'
-                className='cancel-btn'
-                onClick={handleClose}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </button>
-              <button
-                type='submit'
-                className='submit-btn'
-                disabled={isSubmitting || !formData.description.trim()}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className='loading-spinner'>⏳</span>
-                    Enviando...
-                  </>
-                ) : (
-                  'Enviar Reporte'
-                )}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+              <TextField label="Terminal ID" value={formData.terminalId} size="small" fullWidth InputProps={{ readOnly: true }} disabled={isSubmitting} />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose} disabled={isSubmitting}>Cancelar</Button>
+            <Button type="submit" variant="contained" disabled={isSubmitting || !formData.description.trim()}>
+              {isSubmitting ? 'Enviando...' : 'Enviar Reporte'}
+            </Button>
+          </DialogActions>
+        </form>
+      )}
+    </Dialog>
   );
 };
 

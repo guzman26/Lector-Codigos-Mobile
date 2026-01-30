@@ -11,7 +11,7 @@ import type {
   StandardApiResponse,
   ApiResponse,
 } from './types';
-import { API_BASE_URL } from './index';
+import { API_BASE_URL } from './config';
 
 /**
  * Response adapter that converts StandardApiResponse to ApiResponse

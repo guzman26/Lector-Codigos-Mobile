@@ -1,6 +1,5 @@
-// API Base URL with development fallback
-export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// API Base URL (defined in config to avoid circular imports)
+export { API_BASE_URL } from './config';
 
 // API Client and Configuration
 export { apiClient, ApiClientError } from './apiClient';
@@ -42,6 +41,8 @@ export type {
   CreateIssueParams,
   UpdateIssueParams,
   GenerateReportParams,
+  CustomInfoEntry,
+  CreateCustomBoxCustomInfo,
 } from './types';
 
 // Endpoints (Clean Architecture)
@@ -50,6 +51,8 @@ export {
   getInfoFromScannedCode,
   registerBox,
   submitBoxRegistration,
+  createCustomBox,
+  submitCreateCustomBox,
   processScan,
   submitScan,
   movePallet,

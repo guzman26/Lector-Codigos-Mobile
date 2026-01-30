@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Box, Typography } from '../ui';
 import Footer from '../Footer';
-import './Layout.css';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,35 +11,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determinar la pestaña activa basada en la ruta actual
   const getActiveTab = (): string => {
     const path = location.pathname;
     if (path.includes('/configuracion')) return 'configuracion';
-    return 'escaneo'; // Default
+    return 'escaneo';
   };
 
   const [activeTab, setActiveTab] = useState(getActiveTab());
 
   const footerTabs = [
-    {
-      id: 'escaneo',
-      icon: '📱',
-      label: 'Escaneo',
-      isActive: activeTab === 'escaneo',
-    },
-    
-    {
-      id: 'configuracion',
-      icon: '⚙️',
-      label: 'Config',
-      isActive: activeTab === 'configuracion',
-    },
+    { id: 'escaneo', icon: '📱', label: 'Escaneo', isActive: activeTab === 'escaneo' },
+    { id: 'configuracion', icon: '⚙️', label: 'Config', isActive: activeTab === 'configuracion' },
   ];
 
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
-
-    // Navegación basada en el tab seleccionado
     switch (tabId) {
       case 'escaneo':
         navigate('/dashboard');
@@ -53,21 +39,43 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className='layout'>
-      <header className='layout-header'>
-        <div className='header-info'>
-          <h1 className='header-title'>Terminal de Escaneo</h1>
-          <span className='terminal-id'>Terminal ID: TRM-001</span>
-        </div>
-        <div className='status-indicator'>
-          <span className='status-text'>En línea</span>
-        </div>
-      </header>
-
-      <main className='layout-content'>{children}</main>
-
+    <Box display="flex" flexDirection="column" minHeight="100vh">
+      <Box
+        component="header"
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        px={2}
+        py={1.5}
+        sx={{ borderBottom: 1, borderColor: 'divider' }}
+      >
+        <Box>
+          <Typography variant="h6" component="h1">
+            Terminal de Escaneo
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Terminal ID: TRM-001
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="success.main">
+          En línea
+        </Typography>
+      </Box>
+      <Box
+        component="main"
+        flex={1}
+        p={2}
+        sx={{
+          overflow: 'auto',
+          overflowX: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
+        }}
+      >
+        {children}
+      </Box>
       <Footer tabs={footerTabs} onTabClick={handleTabClick} />
-    </div>
+    </Box>
   );
 };
 

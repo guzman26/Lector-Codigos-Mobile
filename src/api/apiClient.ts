@@ -1,5 +1,5 @@
 import type { ApiResponse, ApiError, RequestConfig } from './types';
-import { API_BASE_URL } from './index';
+import { API_BASE_URL } from './config';
 
 /**
  * Default configuration for API requests

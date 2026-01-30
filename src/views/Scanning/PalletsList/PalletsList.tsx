@@ -1,10 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { closePallet, getActivePallets, formatCodeForDisplay } from '../../../api';
+import { getErrorMessage } from '../../../utils/errorHandler';
 import type {
   ActivePallet,
   GetActivePalletsResult,
 } from '../../../api/types';
-import './PalletsList.css';
+import {
+  Box,
+  Stack,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Alert,
+  Chip,
+} from '../../../components/ui';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -34,15 +44,14 @@ const PalletsList: React.FC = () => {
       const data = res.data as GetActivePalletsResult;
       setItems(prev => (append ? [...prev, ...(data?.items || [])] : data?.items || []));
       setLastKey(data?.lastKey || data?.lastEvaluatedKey);
-    } catch (e: any) {
-      setError(e?.message || 'Error al cargar los pallets');
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, 'Error al cargar los pallets'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // initial load
     setItems([]);
     setLastKey(undefined);
     fetchPage(false);
@@ -58,86 +67,94 @@ const PalletsList: React.FC = () => {
       if (!res.success) {
         throw new Error(res.error || 'No se pudo cerrar el pallet');
       }
-      // Optimistically remove or mark as closed
       setItems(prev => prev.filter(p => p.codigo !== codigo));
-    } catch (e: any) {
-      setError(e?.message || 'Error al cerrar el pallet');
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, 'Error al cerrar el pallet'));
     } finally {
       setIsClosing(null);
     }
   };
 
   return (
-    <div className='pallets-list-page'>
-      <div className='pallets-header'>
-        <h2 className='page-title'>Pallets Activos</h2>
-        <div className='filters'>
-          <button
-            className='refresh-btn'
-            onClick={() => fetchPage(false)}
-            disabled={loading}
-          >
-            {loading ? 'Cargando…' : 'Refrescar'}
-          </button>
-        </div>
-      </div>
+    <Box>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2} mb={2}>
+        <Typography variant="h5">Pallets Activos</Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => fetchPage(false)}
+          disabled={loading}
+        >
+          {loading ? 'Cargando…' : 'Refrescar'}
+        </Button>
+      </Stack>
 
-      {error && <div className='error-banner'>{error}</div>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
-      <div className='pallets-list'>
-        {items.length === 0 && !loading && (
-          <div className='empty-state'>No hay pallets activos</div>
-        )}
-        {items.map(pallet => (
-          <div className='pallet-card' key={pallet.codigo}>
-            <div className='pallet-main'>
-              <div className='pallet-code'>
-                {formatCodeForDisplay(pallet.codigo)}
-              </div>
-              <div className='pill-group'>
-                {pallet.estado && (
-                  <span className={`pill state ${pallet.estado}`}>{pallet.estado}</span>
+      {items.length === 0 && !loading && (
+        <Typography color="text.secondary">No hay pallets activos</Typography>
+      )}
+
+      <Stack spacing={2}>
+        {items.map((pallet) => (
+          <Card key={pallet.codigo} variant="outlined">
+            <CardContent>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={1}>
+                <Typography variant="h6">{formatCodeForDisplay(pallet.codigo)}</Typography>
+                <Stack direction="row" spacing={1}>
+                  {pallet.estado && (
+                    <Chip label={pallet.estado} size="small" variant="outlined" />
+                  )}
+                  {pallet.ubicacion && (
+                    <Chip label={pallet.ubicacion} size="small" variant="outlined" />
+                  )}
+                </Stack>
+              </Stack>
+              <Stack direction="row" spacing={2} sx={{ mt: 1 }} flexWrap="wrap">
+                {pallet.createdAt && (
+                  <Typography variant="caption" color="text.secondary">
+                    Creado: {new Date(pallet.createdAt).toLocaleString()}
+                  </Typography>
                 )}
-                {pallet.ubicacion && (
-                  <span className='pill location'>{pallet.ubicacion}</span>
+                {pallet.updatedAt && (
+                  <Typography variant="caption" color="text.secondary">
+                    Actualizado: {new Date(pallet.updatedAt).toLocaleString()}
+                  </Typography>
                 )}
-              </div>
-            </div>
-            <div className='pallet-meta'>
-              {pallet.createdAt && (
-                <span className='meta-item'>Creado: {new Date(pallet.createdAt).toLocaleString()}</span>
-              )}
-              {pallet.updatedAt && (
-                <span className='meta-item'>Actualizado: {new Date(pallet.updatedAt).toLocaleString()}</span>
-              )}
-            </div>
-            <div className='actions'>
-              <button
-                className='close-btn'
-                onClick={() => handleClose(pallet.codigo)}
-                disabled={isClosing === pallet.codigo}
-                title='Cerrar pallet'
-              >
-                {isClosing === pallet.codigo ? 'Cerrando…' : 'Cerrar'}
-              </button>
-            </div>
-          </div>
+              </Stack>
+              <Box sx={{ mt: 1 }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="secondary"
+                  onClick={() => handleClose(pallet.codigo)}
+                  disabled={isClosing === pallet.codigo}
+                  title="Cerrar pallet"
+                >
+                  {isClosing === pallet.codigo ? 'Cerrando…' : 'Cerrar'}
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </div>
+      </Stack>
 
-      <div className='pagination'>
-        <button
-          className='load-more-btn'
+      <Box sx={{ mt: 2 }}>
+        <Button
+          variant="outlined"
+          fullWidth
           onClick={() => fetchPage(true)}
           disabled={loading || !canLoadMore}
         >
           {loading ? 'Cargando…' : canLoadMore ? 'Cargar más' : 'No hay más resultados'}
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Box>
+    </Box>
   );
 };
 
 export default PalletsList;
-
-

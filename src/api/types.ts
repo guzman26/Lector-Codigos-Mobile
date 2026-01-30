@@ -309,13 +309,20 @@ export interface GetBoxesParams {
 }
 
 /**
+ * Custom box: list of [codigo, cantidad de huevos] sent as customInfo
+ */
+export type CustomInfoEntry = [string, number];
+export type CreateCustomBoxCustomInfo = CustomInfoEntry[];
+
+/**
  * Box resource - Create action params
+ * calibre, formato, empresa are optional; backend can derive from codigo when not sent
  */
 export interface CreateBoxParams {
   codigo: string;
-  calibre: string;
-  formato: string;
-  empresa: string;
+  calibre?: string;
+  formato?: string;
+  empresa?: string;
   ubicacion: string;
   operario?: string;
   horario?: string;

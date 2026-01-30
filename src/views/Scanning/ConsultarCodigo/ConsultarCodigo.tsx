@@ -1,10 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScannedCodeInfo } from '../../../api/types';
 import { validateScannedCode } from '../../../utils/validators';
+import { formatDate } from '../../../utils/dateFormatters';
+import { getErrorMessage } from '../../../utils/errorHandler';
 import { submitPalletStatusToggle } from '../../../api';
-import './ConsultarCodigo.css';
 import { useNavigate } from 'react-router-dom';
 import { useScannedCodeContext } from '../../../context/ScannedCodeContext';
+import { useLocalStorage } from '../../../hooks/useLocalStorage';
+import {
+  Box,
+  Stack,
+  Button,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Card,
+  CardContent,
+  Typography,
+  Alert,
+  Chip,
+  Grid,
+  List,
+  ListItem,
+  ListItemButton,
+} from '../../../components/ui';
 
 interface ConsultaResult extends ScannedCodeInfo {
   timestamp: string;
@@ -16,69 +35,51 @@ const ConsultarCodigo: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ConsultaResult | null>(null);
-  const [recentSearches, setRecentSearches] = useState<ConsultaResult[]>([]);
+  const [recentSearches, setRecentSearches] = useLocalStorage<ConsultaResult[]>(
+    'consultar-codigo-history',
+    []
+  );
   const [toggleLoading, setToggleLoading] = useState(false);
   const [toggleError, setToggleError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { getCodeInfo, data } = useScannedCodeContext();
-  // Load recent searches from localStorage on component mount
-  useEffect(() => {
-    const saved = localStorage.getItem('consultar-codigo-history');
-    if (saved) {
-      try {
-        setRecentSearches(JSON.parse(saved));
-      } catch (e) {
-        console.warn('Error loading search history:', e);
-      }
-    }
-  }, []);
 
-  // Save recent searches to localStorage
   const saveToHistory = (searchResult: ConsultaResult) => {
-    const updated = [
-      searchResult,
-      ...recentSearches.filter(r => r.codigo !== searchResult.codigo),
-    ].slice(0, 5);
-    setRecentSearches(updated);
-    localStorage.setItem('consultar-codigo-history', JSON.stringify(updated));
+    setRecentSearches((prev) => {
+      const updated = [
+        searchResult,
+        ...prev.filter(r => r.codigo !== searchResult.codigo),
+      ].slice(0, 5);
+      return updated;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!codigo.trim()) {
       setError('Por favor ingresa un código');
       return;
     }
-
-    // Client-side validation
     const validation = validateScannedCode(codigo);
     if (!validation.isValid) {
       setError(validation.errorMessage || 'Código inválido');
       return;
     }
-
     setLoading(true);
     setError(null);
     try {
       await getCodeInfo(codigo.trim());
-      console.log('🔍 Data:', data);
       if (data) {
-        const resultWithTimestamp: ConsultaResult = {
-          ...data,
-          timestamp: new Date().toISOString(),
-        };
-        console.log('🔍 Result with timestamp:', resultWithTimestamp);
+        const resultWithTimestamp: ConsultaResult = { ...data, timestamp: new Date().toISOString() };
         setResult(resultWithTimestamp);
         saveToHistory(resultWithTimestamp);
       } else {
         setError('No se encontró información para este código');
       }
-      setCodigo(''); // Clear input after successful search
-    } catch (err: any) {
-      console.error('Error consultando código:', err);
-      setError(err.message || 'Error al consultar el código');
+      setCodigo('');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Error al consultar el código'));
       setResult(null);
     } finally {
       setLoading(false);
@@ -91,328 +92,173 @@ const ConsultarCodigo: React.FC = () => {
     inputRef.current?.focus();
   };
 
-  const handleBack = () => {
-    navigate('/dashboard');
-  };
+  const handleBack = () => navigate('/dashboard');
 
-  const handleTogglePalletStatus = async (codigo: string) => {
+  const handleTogglePalletStatus = async (codigoPallet: string) => {
     if (!result || result.pkTipo !== 'PALLET') return;
-
     setToggleLoading(true);
     setToggleError(null);
-
     try {
-      const toggleResult = await submitPalletStatusToggle(codigo);
-      
-      // Update the result with the new status
+      const toggleResult = await submitPalletStatusToggle(codigoPallet);
       setResult(prev => prev ? {
         ...prev,
         palletStatus: toggleResult.estadoNuevo,
         ultimaActualizacion: toggleResult.fechaActualizacion
       } : null);
-
-      // Show success message briefly
       setToggleError(`✅ ${toggleResult.mensaje}`);
       setTimeout(() => setToggleError(null), 3000);
-
-    } catch (err: any) {
-      console.error('Error toggling pallet status:', err);
-      setToggleError(err.message || 'Error al cambiar el estado del pallet');
+    } catch (err: unknown) {
+      setToggleError(getErrorMessage(err, 'Error al cambiar el estado del pallet'));
     } finally {
       setToggleLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffInMs = now.getTime() - date.getTime();
-      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-      const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-      if (diffInMinutes < 1) {
-        return 'hace unos segundos';
-      } else if (diffInMinutes < 60) {
-        return `hace ${diffInMinutes} minuto${diffInMinutes !== 1 ? 's' : ''}`;
-      } else if (diffInHours < 24) {
-        return `hace ${diffInHours} hora${diffInHours !== 1 ? 's' : ''}`;
-      } else if (diffInDays < 30) {
-        return `hace ${diffInDays} día${diffInDays !== 1 ? 's' : ''}`;
-      } else {
-        return date.toLocaleDateString('es-ES');
-      }
-    } catch {
-      return 'Fecha inválida';
-    }
-  };
-
-  const getStatusClass = (estado: string) => {
-    switch (estado.toLowerCase()) {
-      case 'activo':
-        return 'status-active';
-      case 'inactivo':
-        return 'status-inactive';
-      case 'bloqueado':
-        return 'status-blocked';
-      default:
-        return 'status-unknown';
-    }
-  };
 
   const renderActionButtons = (item: ConsultaResult) => {
     if (item.pkTipo === 'BOX') {
       return (
-        <div className='action-buttons'>
-          <button className='btn-modern btn-primary'>
-            📦 Mover Caja
-          </button>
-          <button className='btn-modern btn-secondary'>
-            ℹ️ Ver Detalles
-          </button>
-          <button className='btn-modern btn-secondary'>
-            🔄 Actualizar
-          </button>
-        </div>
-      );
-    } else {
-      const currentStatus = item.palletStatus || 'cerrado';
-      const isOpen = currentStatus === 'abierto';
-      
-      return (
-        <div className='action-buttons'>
-          <button className='btn-modern btn-primary'>
-            🚛 Mover Pallet
-          </button>
-          <button className='btn-modern btn-secondary'>
-            📋 Ver Contenido
-          </button>
-          <button 
-            className={`btn-modern ${isOpen ? 'btn-danger' : 'btn-success'}`}
-            onClick={() => handleTogglePalletStatus(item.codigo)}
-            disabled={toggleLoading}
-          >
-            {toggleLoading ? (
-              <>
-                <div className='spinner-small'></div>
-                Cambiando...
-              </>
-            ) : isOpen ? (
-              '🔒 Cerrar Pallet'
-            ) : (
-              '🔓 Abrir Pallet'
-            )}
-          </button>
-          <button className='btn-modern btn-secondary'>
-            🔄 Actualizar
-          </button>
-        </div>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Button variant="contained" size="small">📦 Mover Caja</Button>
+          <Button variant="outlined" size="small">ℹ️ Ver Detalles</Button>
+          <Button variant="outlined" size="small">🔄 Actualizar</Button>
+        </Stack>
       );
     }
+    const currentStatus = item.palletStatus || 'cerrado';
+    const isOpen = currentStatus === 'abierto';
+    return (
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+        <Button variant="contained" size="small">🚛 Mover Pallet</Button>
+        <Button variant="outlined" size="small">📋 Ver Contenido</Button>
+        <Button
+          variant="contained"
+          size="small"
+          color={isOpen ? 'error' : 'success'}
+          onClick={() => handleTogglePalletStatus(item.codigo)}
+          disabled={toggleLoading}
+        >
+          {toggleLoading ? 'Cambiando...' : isOpen ? '🔒 Cerrar Pallet' : '🔓 Abrir Pallet'}
+        </Button>
+        <Button variant="outlined" size="small">🔄 Actualizar</Button>
+      </Stack>
+    );
   };
 
   return (
-    <div className='consultar-codigo'>
-      {/* Header */}
-      <div className='header'>
-        <button onClick={handleBack} className='back-btn'>
-          ← Volver
-        </button>
-        <div className='header-content'>
-          <div className='header-icon'>
-            🔍
-          </div>
-          <h1>Consultar Código</h1>
-          <p>Ingresa un código para consultar información detallada</p>
-        </div>
-      </div>
+    <Box>
+      <Stack direction="row" alignItems="center" spacing={2} mb={2}>
+        <Button onClick={handleBack} variant="outlined" size="small">← Volver</Button>
+        <Box>
+          <Typography variant="h5">🔍 Consultar Código</Typography>
+          <Typography variant="body2" color="text.secondary">Ingresa un código para consultar información detallada</Typography>
+        </Box>
+      </Stack>
 
-      {/* Search Section */}
-      <div className='search-section'>
-        <form onSubmit={handleSubmit} className='search-form'>
-          <div className='search-container'>
-            <div className='input-wrapper'>
-              <span className='search-icon'>🔍</span>
-              <input
-                ref={inputRef}
-                type='text'
-                value={codigo}
-                onChange={e => setCodigo(e.target.value)}
-                placeholder='Escanea o ingresa el código (12 o 15 dígitos)'
-                className='search-input'
-                disabled={loading}
-                autoFocus
-              />
-              {codigo && (
-                <button 
-                  type="button" 
-                  className='clear-btn'
-                  onClick={() => setCodigo('')}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-            <button
-              type='submit'
-              className='search-button'
-              disabled={loading || !codigo.trim()}
-            >
-              {loading ? (
-                <div className='spinner'></div>
-              ) : (
-                <>
-                  🔍 Buscar
-                </>
-              )}
-            </button>
-          </div>
-          {error && (
-            <div className='error-message'>
-              ⚠️ {error}
-            </div>
-          )}
-        </form>
-      </div>
+      <form onSubmit={handleSubmit}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="flex-start" mb={2}>
+          <TextField
+            inputRef={inputRef}
+            size="small"
+            fullWidth
+            value={codigo}
+            onChange={e => setCodigo(e.target.value)}
+            placeholder="Escanea o ingresa el código (12 o 15 dígitos)"
+            disabled={loading}
+            InputProps={{
+              startAdornment: <InputAdornment position="start">🔍</InputAdornment>,
+              endAdornment: codigo ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setCodigo('')} aria-label="limpiar">✕</IconButton>
+                </InputAdornment>
+              ) : null,
+            }}
+          />
+          <Button type="submit" variant="contained" disabled={loading || !codigo.trim()}>
+            {loading ? 'Buscando...' : '🔍 Buscar'}
+          </Button>
+        </Stack>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>⚠️ {error}</Alert>}
+      </form>
 
-      {/* Search Result */}
       {result && (
-        <div className='result-section'>
-          {/* Code Header Card */}
-          <div className='code-card'>
-            <div className='code-header'>
-              <div className='code-info'>
-                <h2 className='code-value'>{result.codigo}</h2>
-                <span className='code-timestamp'>
-                  🕒 Consultado {formatDate(result.timestamp)}
-                </span>
-              </div>
-              <div className='code-badges'>
-                <span className={`badge badge-type ${result.pkTipo === 'BOX' ? 'badge-box' : 'badge-pallet'}`}>
-                  {result.pkTipo === 'BOX' ? '📦 Caja' : '🚛 Pallet'}
-                </span>
-                <span className={`badge badge-status ${getStatusClass(result.estado)}`}>
-                  {result.estado}
-                </span>
-                {result.pkTipo === 'PALLET' && (
-                  <span className={`badge badge-pallet-status ${result.palletStatus === 'abierto' ? 'badge-open' : 'badge-closed'}`}>
-                    {result.palletStatus === 'abierto' ? '🔓 Abierto' : '🔒 Cerrado'}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Info Tags */}
-            <div className='quick-tags'>
-              <span className='tag'>
-                👤 Operario: {result.operario || 'N/A'}
-              </span>
-              <span className='tag'>
-                🏭 Empacadora: {result.empacadora || 'N/A'}
-              </span>
-              <span className='tag'>
-                📦 Formato: {result.formato_caja || 'N/A'}
-              </span>
-            </div>
-          </div>
-
-          {/* Toggle Message */}
+        <Box mt={3}>
           {toggleError && (
-            <div className={`alert ${toggleError.startsWith('✅') ? 'alert-success' : 'alert-error'}`}>
-              <div className='alert-content'>
-                {toggleError}
-              </div>
-            </div>
+            <Alert severity={toggleError.startsWith('✅') ? 'success' : 'error'} sx={{ mb: 2 }}>{toggleError}</Alert>
           )}
+          <Card variant="outlined" sx={{ mb: 2 }}>
+            <CardContent>
+              <Box display="flex" flexWrap="wrap" gap={1} alignItems="center" justifyContent="space-between" mb={1}>
+                <Typography variant="h6">{result.codigo}</Typography>
+                <Typography variant="caption" color="text.secondary">🕒 Consultado {formatDate(result.timestamp)}</Typography>
+              </Box>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                <Chip label={result.pkTipo === 'BOX' ? '📦 Caja' : '🚛 Pallet'} size="small" />
+                <Chip label={result.estado} size="small" variant="outlined" />
+                {result.pkTipo === 'PALLET' && (
+                  <Chip label={result.palletStatus === 'abierto' ? '🔓 Abierto' : '🔒 Cerrado'} size="small" variant="outlined" />
+                )}
+              </Stack>
+              <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1 }}>
+                <Chip size="small" label={`👤 Operario: ${result.operario || 'N/A'}`} variant="outlined" />
+                <Chip size="small" label={`🏭 Empacadora: ${result.empacadora || 'N/A'}`} variant="outlined" />
+                <Chip size="small" label={`📦 Formato: ${result.formato_caja || 'N/A'}`} variant="outlined" />
+              </Stack>
+            </CardContent>
+          </Card>
 
-          {/* Information Grid */}
-          <div className='info-grid'>
-            {/* Product Information */}
+          <Grid container spacing={2}>
             {result.producto && (
-              <div className='info-card'>
-                <div className='info-header'>
-                  <span>📋</span>
-                  <h3>Información del Producto</h3>
-                </div>
-                <div className='info-content'>
-                  <div className='info-row'>
-                    <span className='label'>ID:</span>
-                    <span className='value'>{result.producto.id}</span>
-                  </div>
-                  <div className='info-row'>
-                    <span className='label'>Nombre:</span>
-                    <span className='value'>{result.producto.nombre}</span>
-                  </div>
-                  {result.producto.descripcion && (
-                    <div className='info-row full-width'>
-                      <span className='label'>Descripción:</span>
-                      <span className='value'>{result.producto.descripcion}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="subtitle1" gutterBottom>📋 Información del Producto</Typography>
+                    <Typography variant="body2"><strong>ID:</strong> {result.producto.id}</Typography>
+                    <Typography variant="body2"><strong>Nombre:</strong> {result.producto.nombre}</Typography>
+                    {result.producto.descripcion && <Typography variant="body2"><strong>Descripción:</strong> {result.producto.descripcion}</Typography>}
+                  </CardContent>
+                </Card>
+              </Grid>
             )}
+            <Grid item xs={12} md={6}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="subtitle1" gutterBottom>📅 Seguimiento</Typography>
+                  <Typography variant="body2"><strong>Creado:</strong> {formatDate(result.fecha_registro)}</Typography>
+                  <Typography variant="body2"><strong>Actualizado:</strong> {formatDate(result.scannedAt)}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
 
-            {/* Tracking Information */}
-            <div className='info-card'>
-              <div className='info-header'>
-                <span>📅</span>
-                <h3>Seguimiento</h3>
-              </div>
-              <div className='info-content'>
-                <div className='info-row'>
-                  <span className='label'>Creado:</span>
-                  <span className='value'>{formatDate(result.fecha_registro)}</span>
-                </div>
-                <div className='info-row'>
-                  <span className='label'>Actualizado:</span>
-                  <span className='value'>{formatDate(result.scannedAt)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className='actions-section'>
+          <Box mt={2}>
+            <Typography variant="subtitle2" gutterBottom>Acciones</Typography>
             {renderActionButtons(result)}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
-      {/* Recent Searches */}
       {recentSearches.length > 0 && (
-        <div className='recent-section'>
-          <div className='section-header'>
-            <span>📝</span>
-            <h3>Búsquedas Recientes</h3>
-          </div>
-          <div className='recent-grid'>
+        <Box mt={3}>
+          <Typography variant="subtitle1" gutterBottom>📝 Búsquedas Recientes</Typography>
+          <List dense>
             {recentSearches.map((item, index) => (
-              <div
-                key={`${item.codigo}-${index}`}
-                className='recent-card'
-                onClick={() => handleQuickSearch(item)}
-              >
-                <div className='recent-header'>
-                  <span className='recent-code'>{item.codigo}</span>
-                  <span className={`recent-badge ${item.pkTipo === 'BOX' ? 'badge-box' : 'badge-pallet'}`}>
-                    {item.pkTipo === 'BOX' ? '📦' : '🚛'}
-                  </span>
-                </div>
-                <div className='recent-info'>
-                  <p className='recent-product'>{item.producto?.nombre || 'Producto sin nombre'}</p>
-                  <span className='recent-time'>{formatDate(item.timestamp)}</span>
-                </div>
-              </div>
+              <ListItem key={`${item.codigo}-${index}`} disablePadding>
+                <ListItemButton onClick={() => handleQuickSearch(item)}>
+                  <Box width="100%" display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body2">{item.codigo}</Typography>
+                    <Chip size="small" label={item.pkTipo === 'BOX' ? '📦' : '🚛'} />
+                    <Typography variant="caption" color="text.secondary">{item.producto?.nombre || 'Producto sin nombre'}</Typography>
+                    <Typography variant="caption">{formatDate(item.timestamp)}</Typography>
+                  </Box>
+                </ListItemButton>
+              </ListItem>
             ))}
-          </div>
-        </div>
+          </List>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 
 export default ConsultarCodigo;
-
-

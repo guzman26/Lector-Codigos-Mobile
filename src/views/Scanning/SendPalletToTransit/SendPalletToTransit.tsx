@@ -1,8 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { validateScannedCode } from '../../../utils/validators';
+import { getErrorMessage } from '../../../utils/errorHandler';
 import { submitMovePallet } from '../../../api';
-import './SendPalletToTransit.css';
+import { useScanMode } from '../../../hooks/useScanMode';
+import {
+  PALLET_CODE_LENGTH,
+  TRANSIT_LOCATION,
+} from '../../../api/inventoryConstants';
+import {
+  Box,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Alert,
+} from '../../../components/ui';
 
 const SendPalletToTransit: React.FC = () => {
   const navigate = useNavigate();
@@ -10,16 +23,7 @@ const SendPalletToTransit: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [scanMode, setScanMode] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const toggleScanMode = () => setScanMode(prev => !prev);
-
-  useEffect(() => {
-    if (scanMode && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [scanMode]);
+  const { scanMode, toggleScanMode, inputRef } = useScanMode();
 
   const handleBack = () => navigate('/dashboard');
 
@@ -40,14 +44,14 @@ const SendPalletToTransit: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      const result = await submitMovePallet(cleanCode, 'TRANSITO');
+      const result = await submitMovePallet(cleanCode, TRANSIT_LOCATION);
       setSuccessMessage(result.message || 'Pallet movido exitosamente');
       setCodigo('');
       if (scanMode && inputRef.current) {
         inputRef.current.focus();
       }
-    } catch (err: any) {
-      setError(err.message || 'Error al mover el pallet');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Error al mover el pallet'));
     } finally {
       setLoading(false);
     }
@@ -59,135 +63,95 @@ const SendPalletToTransit: React.FC = () => {
     codigo.length > 0 && validation.isValid && validation.type !== 'pallet';
 
   return (
-    <div className='send-pallet-content'>
-      <div className='send-pallet-header'>
-        <button onClick={handleBack} className='back-btn'>
+    <Box>
+      <Stack spacing={2} mb={2}>
+        <Button variant="outlined" size="small" onClick={handleBack}>
           ← Volver
-        </button>
-        <h1>Enviar Pallet a TRANSITO</h1>
-        <p>Escanea o ingresa el código del pallet (14 dígitos)</p>
+        </Button>
+        <Typography variant="h5">Enviar Pallet a {TRANSIT_LOCATION}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Escanea o ingresa el código del pallet ({PALLET_CODE_LENGTH} dígitos)
+        </Typography>
 
-        {/* Toggle Scanner Mode */}
-        <div className='scanner-mode-toggle'>
-          <button
-            onClick={toggleScanMode}
-            className={`toggle-btn ${scanMode ? 'active' : ''}`}
-            disabled={loading}
-          >
-            <span className='toggle-icon'>{scanMode ? '📱' : '⚡'}</span>
-            <span className='toggle-text'>
-              {scanMode ? 'Modo Scanner: ON' : 'Modo Scanner: OFF'}
-            </span>
-          </button>
-          {scanMode && (
-            <p className='scanner-mode-info'>
-              🔍 Modo scanner activo - El campo permanecerá enfocado para escaneo
-              consecutivo
-            </p>
-          )}
-        </div>
-      </div>
+        <Button
+          variant={scanMode ? 'contained' : 'outlined'}
+          size="small"
+          onClick={toggleScanMode}
+          disabled={loading}
+        >
+          {scanMode ? '📱 Modo Scanner: ON' : '⚡ Modo Scanner: OFF'}
+        </Button>
+        {scanMode && (
+          <Typography variant="caption" color="text.secondary">
+            🔍 Modo scanner activo - El campo permanecerá enfocado para escaneo consecutivo
+          </Typography>
+        )}
+      </Stack>
 
       {error && (
-        <div className='error-section'>
-          <div className='error-message'>
-            <span className='error-icon'>⚠️</span>
-            <span className='error-text'>{error}</span>
-            <button onClick={() => setError(null)} className='error-close'>
-              ✕
-            </button>
-          </div>
-        </div>
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
       )}
 
       {successMessage && (
-        <div className='success-section'>
-          <div className='success-message'>
-            <span className='success-icon'>✅</span>
-            <div className='success-content'>
-              <h3>{successMessage}</h3>
-              <p>Pallet enviado a TRANSITO</p>
-            </div>
-          </div>
-        </div>
+        <Alert severity="success" sx={{ mb: 2 }}>
+          <Typography variant="subtitle2">{successMessage}</Typography>
+          <Typography variant="body2">Pallet enviado a {TRANSIT_LOCATION}</Typography>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className='scan-form'>
-        <div className='form-section'>
-          <div className='form-group'>
-            <label htmlFor='codigo' className='form-label'>
-              Código de Pallet
-            </label>
-            <input
-              ref={inputRef}
-              type='text'
-              id='codigo'
-              value={codigo}
-              onChange={e => setCodigo(e.target.value)}
-              placeholder={
-                scanMode
-                  ? 'Escanea códigos consecutivamente...'
-                  : 'Escanea o ingresa código de 14 dígitos'
-              }
-              className={`form-input code-input ${
-                showValidationError || showTypeError ? 'error' : ''
-              } ${scanMode ? 'scanner-mode' : ''}`}
-              disabled={loading}
-              autoFocus
-              maxLength={14}
-            />
+      <form onSubmit={handleSubmit}>
+        <Stack spacing={1} mb={2}>
+          <TextField
+            inputRef={inputRef}
+            label="Código de Pallet"
+            value={codigo}
+            onChange={e => setCodigo(e.target.value)}
+            placeholder={
+              scanMode
+                ? 'Escanea códigos consecutivamente...'
+                : `Escanea o ingresa código de ${PALLET_CODE_LENGTH} dígitos`
+            }
+            error={showValidationError || showTypeError}
+            helperText={
+              showValidationError
+                ? validation.errorMessage
+                : showTypeError
+                  ? `Este código es de una caja. Solo se permiten códigos de pallet (${PALLET_CODE_LENGTH} dígitos).`
+                  : codigo.length > 0 &&
+                      validation.isValid &&
+                      validation.type === 'pallet'
+                    ? '✓ Código válido - Presiona Enter para enviar'
+                    : undefined
+            }
+            disabled={loading}
+            autoFocus
+            inputProps={{ maxLength: PALLET_CODE_LENGTH }}
+            fullWidth
+          />
+        </Stack>
 
-            {showValidationError && (
-              <span className='validation-error'>
-                {validation.errorMessage}
-              </span>
-            )}
+        <Typography variant="body2" color="text.secondary" component="div" sx={{ mb: 2 }}>
+          <strong>Ubicación destino:</strong> {TRANSIT_LOCATION} · Solo códigos de pallet ({PALLET_CODE_LENGTH} dígitos) ·
+          Presiona Enter para procesar
+          {scanMode ? (
+            <span> · Modo Scanner: campo siempre enfocado</span>
+          ) : (
+            <span> · Activa Modo Scanner para escaneo con dispositivo físico</span>
+          )}
+        </Typography>
 
-            {showTypeError && (
-              <span className='validation-error'>
-                Este código es de una caja. Solo se permiten códigos de pallet
-                (14 dígitos).
-              </span>
-            )}
-
-            {codigo.length > 0 &&
-              validation.isValid &&
-              validation.type === 'pallet' && (
-                <span className='validation-success'>
-                  ✓ Código válido - Presiona Enter para enviar
-                </span>
-              )}
-          </div>
-
-          <div className='info-box'>
-            <h4>Información</h4>
-            <ul>
-              <li>• Ubicación destino: <strong>TRANSITO</strong></li>
-              <li>• Solo códigos de pallet (14 dígitos)</li>
-              <li>• Presiona <kbd>Enter</kbd> para procesar</li>
-              {scanMode ? (
-                <li>
-                  • <strong>Modo Scanner:</strong> Campo siempre enfocado para
-                  escaneo consecutivo
-                </li>
-              ) : (
-                <li>
-                  • Activa el <strong>Modo Scanner</strong> para escaneo con
-                  dispositivo físico
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={loading || !codigo.trim()}
+          fullWidth
+        >
+          {loading ? 'Enviando pallet...' : `Enviar a ${TRANSIT_LOCATION}`}
+        </Button>
       </form>
-
-      {loading && (
-        <div className='loading-overlay'>
-          <div className='loading-spinner'></div>
-          <p>Enviando pallet...</p>
-        </div>
-      )}
-    </div>
+    </Box>
   );
 };
 

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { createPallet } from '../api';
-import { isValidPalletBaseCode } from '../utils/validators';
+import { validateScannedCode } from '../utils/validators';
 import type {
   PalletFormData,
   PalletFormErrors,
@@ -14,18 +14,10 @@ import {
   FORM_FIELDS,
 } from '../views/Scanning/CreatePalletForm/PalletFormConstants';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 import isoWeek from 'dayjs/plugin/isoWeek';
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
 dayjs.extend(isoWeek);
 
-// Si quieres forzar la zona local de tu servidor/navegador:
-/**
- * Initial form data
- */
 const initialFormData: PalletFormData = {
   turno: '',
   calibre: '',
@@ -36,65 +28,35 @@ const initialFormData: PalletFormData = {
   useManualCode: false,
 };
 
-/**
- * Generate a pallet code based on form parameters
- */
 const generatePalletCode = (params: PalletCodeParams): string => {
   const now = dayjs();
-
-  // 1) día de la semana: 1 (lunes) … 7 (domingo)
-  const diaSemana = now.isoWeekday(); // si usas isoWeek
-  // const diaSemana = now.day(); // 0 domingo…6 sábado si no usas iso
-
-  // 2) semana del año, dos dígitos
+  const diaSemana = now.isoWeekday();
   const semana = now.isoWeek().toString().padStart(2, '0');
-  // o bien now.isoWeek()
-
-  // 3) año, últimos dos dígitos
   const año = now.format('YY');
-
-  // Build 11-digit base code: D(1) + SS(2) + AA(2) + T(1) + CC(2) + F(1) + EE(2)
-  const ee = params.empresa.padStart(2, '0');
-  return `${diaSemana}${semana}${año}${params.turno}${params.calibre}${params.formato}${ee}`;
+  const randomPart = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `${diaSemana}${semana}${año}${params.turno}${params.calibre.slice(-1)}${params.formato}${randomPart}`;
 };
 
-/**
- * Validate form data
- */
 const validateForm = (formData: PalletFormData): PalletFormErrors => {
   const errors: PalletFormErrors = {};
-
   if (formData.useManualCode) {
-    // Validate manual code
     if (!formData.codigoManual.trim()) {
       errors[FORM_FIELDS.CODIGO_MANUAL] = ERROR_MESSAGES.REQUIRED_FIELD;
     } else {
-      if (!isValidPalletBaseCode(formData.codigoManual)) {
+      const validation = validateScannedCode(formData.codigoManual);
+      if (!validation.isValid || validation.type !== 'pallet') {
         errors[FORM_FIELDS.CODIGO_MANUAL] = ERROR_MESSAGES.INVALID_CODE;
       }
     }
   } else {
-    // Validate generation parameters
-    if (!formData.turno) {
-      errors[FORM_FIELDS.TURNO] = ERROR_MESSAGES.REQUIRED_FIELD;
-    }
-    if (!formData.calibre) {
-      errors[FORM_FIELDS.CALIBRE] = ERROR_MESSAGES.REQUIRED_FIELD;
-    }
-    if (!formData.formato) {
-      errors[FORM_FIELDS.FORMATO] = ERROR_MESSAGES.REQUIRED_FIELD;
-    }
-    if (!formData.empresa) {
-      errors[FORM_FIELDS.EMPRESA] = ERROR_MESSAGES.REQUIRED_FIELD;
-    }
+    if (!formData.turno) errors[FORM_FIELDS.TURNO] = ERROR_MESSAGES.REQUIRED_FIELD;
+    if (!formData.calibre) errors[FORM_FIELDS.CALIBRE] = ERROR_MESSAGES.REQUIRED_FIELD;
+    if (!formData.formato) errors[FORM_FIELDS.FORMATO] = ERROR_MESSAGES.REQUIRED_FIELD;
+    if (!formData.empresa) errors[FORM_FIELDS.EMPRESA] = ERROR_MESSAGES.REQUIRED_FIELD;
   }
-
   return errors;
 };
 
-/**
- * Custom hook for managing pallet form state and operations
- */
 export const usePalletForm = (
   onPalletCreated?: (palletCode: string) => void
 ): UsePalletFormReturn => {
@@ -107,16 +69,12 @@ export const usePalletForm = (
     alertType: null,
   });
 
-  /**
-   * Generate pallet code when form data changes
-   */
   useEffect(() => {
     if (
       !state.formData.useManualCode &&
       state.formData.turno &&
       state.formData.calibre &&
-      state.formData.formato &&
-      state.formData.empresa
+      state.formData.formato
     ) {
       try {
         const code = generatePalletCode({
@@ -125,23 +83,15 @@ export const usePalletForm = (
           formato: state.formData.formato,
           empresa: state.formData.empresa,
         });
-
         setState(prev => {
-          const { generation: _GENERATION_UNUSED, ...restErrors } = prev.errors;
-          return {
-            ...prev,
-            generatedCode: code,
-            errors: restErrors,
-          };
+          const { generation, ...restErrors } = prev.errors;
+          return { ...prev, generatedCode: code, errors: restErrors };
         });
       } catch {
         setState(prev => ({
           ...prev,
           generatedCode: null,
-          errors: {
-            ...prev.errors,
-            generation: ERROR_MESSAGES.CODE_GENERATION_ERROR,
-          },
+          errors: { ...prev.errors, generation: ERROR_MESSAGES.CODE_GENERATION_ERROR },
         }));
       }
     } else if (state.formData.useManualCode) {
@@ -150,10 +100,7 @@ export const usePalletForm = (
         generatedCode: state.formData.codigoManual || null,
       }));
     } else {
-      setState(prev => ({
-        ...prev,
-        generatedCode: null,
-      }));
+      setState(prev => ({ ...prev, generatedCode: null }));
     }
   }, [
     state.formData.turno,
@@ -164,37 +111,24 @@ export const usePalletForm = (
     state.formData.codigoManual,
   ]);
 
-  /**
-   * Handle input change
-   */
-  const handleInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-      const { name, value, type } = event.target;
-      const checked =
-        type === 'checkbox'
-          ? (event.target as HTMLInputElement).checked
-          : undefined;
+  const handleInputChange = useCallback((event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+    const { name, value, type } = event.target;
+    const checked = type === 'checkbox' ? (event.target as HTMLInputElement).checked : undefined;
+    setState(prev => {
+      const { [name]: _, ...restErrors } = prev.errors;
+      return {
+        ...prev,
+        formData: {
+          ...prev.formData,
+          [name]: type === 'checkbox' ? checked : value,
+        },
+        errors: restErrors,
+        alertMessage: null,
+        alertType: null,
+      };
+    });
+  }, []);
 
-      setState(prev => {
-        const { [name]: _, ...restErrors } = prev.errors;
-        return {
-          ...prev,
-          formData: {
-            ...prev.formData,
-            [name]: type === 'checkbox' ? checked : value,
-          },
-          errors: restErrors,
-          alertMessage: null,
-          alertType: null,
-        };
-      });
-    },
-    []
-  );
-
-  /**
-   * Toggle manual code input
-   */
   const handleToggleManualCode = useCallback(() => {
     setState(prev => ({
       ...prev,
@@ -210,92 +144,6 @@ export const usePalletForm = (
     }));
   }, []);
 
-  /**
-   * Handle form submission
-   */
-  const handleSubmit = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-
-      // Validate form
-      const errors = validateForm(state.formData);
-      if (Object.keys(errors).length > 0) {
-        setState(prev => ({
-          ...prev,
-          errors,
-          alertMessage: ERROR_MESSAGES.FORM_INCOMPLETE,
-          alertType: 'error',
-        }));
-        return;
-      }
-
-      const baseCodeToSubmit = state.formData.useManualCode
-        ? state.formData.codigoManual.trim()
-        : state.generatedCode;
-
-      if (!baseCodeToSubmit) {
-        setState(prev => ({
-          ...prev,
-          alertMessage: ERROR_MESSAGES.CODE_GENERATION_ERROR,
-          alertType: 'error',
-        }));
-        return;
-      }
-
-      setState(prev => ({
-        ...prev,
-        isSubmitting: true,
-        alertMessage: null,
-        alertType: null,
-      }));
-
-      try {
-        let maxBoxesNum = state.formData.maxBoxes
-          ? Number(state.formData.maxBoxes)
-          : undefined;
-        
-        // Limitar a máximo 60 cajas
-        if (maxBoxesNum !== undefined && maxBoxesNum > 60) {
-          maxBoxesNum = 60;
-        }
-        
-        const response = await createPallet(baseCodeToSubmit, maxBoxesNum);
-
-        if (response.success) {
-          setState(prev => ({
-            ...prev,
-            isSubmitting: false,
-            alertMessage: SUCCESS_MESSAGES.PALLET_CREATED,
-            alertType: 'success',
-          }));
-
-          // Call success callback
-          if (onPalletCreated) {
-            onPalletCreated(baseCodeToSubmit);
-          }
-
-          // Reset form after a short delay
-          setTimeout(() => {
-            resetForm();
-          }, 2000);
-        } else {
-          throw new Error(response.error || ERROR_MESSAGES.GENERIC_ERROR);
-        }
-      } catch (error: any) {
-        setState(prev => ({
-          ...prev,
-          isSubmitting: false,
-          alertMessage: error.message || ERROR_MESSAGES.UNEXPECTED_ERROR,
-          alertType: 'error',
-        }));
-      }
-    },
-    [state.formData, state.generatedCode, onPalletCreated]
-  );
-
-  /**
-   * Reset form to initial state
-   */
   const resetForm = useCallback(() => {
     setState({
       formData: initialFormData,
@@ -306,6 +154,59 @@ export const usePalletForm = (
       alertType: null,
     });
   }, []);
+
+  const handleSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const errors = validateForm(state.formData);
+      if (Object.keys(errors).length > 0) {
+        setState(prev => ({
+          ...prev,
+          errors,
+          alertMessage: ERROR_MESSAGES.FORM_INCOMPLETE,
+          alertType: 'error',
+        }));
+        return;
+      }
+      const codigoToSubmit = state.formData.useManualCode
+        ? state.formData.codigoManual.trim()
+        : state.generatedCode;
+      if (!codigoToSubmit) {
+        setState(prev => ({
+          ...prev,
+          alertMessage: ERROR_MESSAGES.CODE_GENERATION_ERROR,
+          alertType: 'error',
+        }));
+        return;
+      }
+      setState(prev => ({ ...prev, isSubmitting: true, alertMessage: null, alertType: null }));
+      try {
+        const maxBoxesNum = state.formData.maxBoxes ? parseInt(state.formData.maxBoxes, 10) : undefined;
+        const response = await createPallet(codigoToSubmit, maxBoxesNum);
+        if (response.success) {
+          setState(prev => ({
+            ...prev,
+            isSubmitting: false,
+            alertMessage: SUCCESS_MESSAGES.PALLET_CREATED,
+            alertType: 'success',
+          }));
+          if (onPalletCreated) onPalletCreated(codigoToSubmit);
+          setTimeout(resetForm, 2000);
+        } else {
+          throw new Error((response as { error?: string }).error || ERROR_MESSAGES.GENERIC_ERROR);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+        setState(prev => ({
+          ...prev,
+          isSubmitting: false,
+          alertMessage: msg,
+          alertType: 'error',
+        }));
+      }
+    },
+    [state.formData, state.generatedCode, onPalletCreated, resetForm]
+  );
 
   return {
     ...state,

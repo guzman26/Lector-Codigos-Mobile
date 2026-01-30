@@ -1,1 +1,1 @@
-export { CreateCustomBox, default } from './CreateCustomBox'; 
+export { default } from './CreateCustomBox';

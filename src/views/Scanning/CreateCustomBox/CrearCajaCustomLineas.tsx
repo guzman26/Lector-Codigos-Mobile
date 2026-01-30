@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { validateScannedCode } from '../../../utils/validators';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { submitCreateCustomBox } from '../../../api';
 import {
@@ -12,26 +11,19 @@ import {
   Alert,
 } from '../../../components/ui';
 
-const TITLE = 'Crear Caja Custom';
-const DESCRIPTION =
-  'Código de caja (16 dígitos) y líneas con código y cantidad de huevos.';
 const DEFAULT_UBICACION = 'PACKING';
-const LABEL_CODIGO_CAJA = 'Código de caja';
 const LABEL_UBICACION = 'Ubicación';
-const LABEL_CODIGO = 'Código';
 const LABEL_CANTIDAD = 'Cantidad (huevos)';
-const BTN_AGREGAR = 'Agregar línea';
+const LABEL_CODIGO = 'Código';
+const BTN_AGREGAR = 'Agregar código';
 const BTN_QUITAR = 'Quitar';
 const BTN_SUBMIT = 'Crear caja';
 const BTN_SUBMIT_LOADING = 'Creando...';
-const ERROR_CODIGO_OBLIGATORIO = 'El código es obligatorio';
-const ERROR_CODIGO_CAJA = 'El código debe ser de caja (16 dígitos)';
-const ERROR_AL_MENOS_UNA = 'Debe haber al menos una línea con código y cantidad';
-const ERROR_LINEA_CODIGO = 'El código de la línea no puede estar vacío';
 const ERROR_LINEA_CANTIDAD = 'La cantidad debe ser >= 0';
+const ERROR_LINEA_CODIGO = 'El código no puede estar vacío';
 const SUCCESS_DEFAULT = 'Caja custom creada exitosamente';
 
-interface CustomLine {
+interface ExtraLine {
   id: string;
   codigo: string;
   cantidad: number;
@@ -41,59 +33,61 @@ function nextId(): string {
   return `line-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-const CreateCustomBox: React.FC = () => {
+const CrearCajaCustomLineas: React.FC = () => {
   const navigate = useNavigate();
-  const [codigo, setCodigo] = useState('');
+  const location = useLocation();
+  const codigoCaja = (location.state as { codigoCaja?: string } | null)?.codigoCaja;
+
+  const [cantidadPrimera, setCantidadPrimera] = useState<number>(0);
+  const [extraLines, setExtraLines] = useState<ExtraLine[]>([]);
   const [ubicacion, setUbicacion] = useState(DEFAULT_UBICACION);
-  const [items, setItems] = useState<CustomLine[]>([
-    { id: nextId(), codigo: '', cantidad: 0 },
-  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleBack = () => navigate('/dashboard');
+  useEffect(() => {
+    if (!codigoCaja || codigoCaja.trim().length === 0) {
+      navigate('/crear-caja-custom', { replace: true });
+    }
+  }, [codigoCaja, navigate]);
+
+  const handleBack = () => navigate('/crear-caja-custom');
 
   const addLine = () => {
-    setItems(prev => [...prev, { id: nextId(), codigo: '', cantidad: 0 }]);
+    setExtraLines(prev => [...prev, { id: nextId(), codigo: '', cantidad: 0 }]);
   };
 
   const removeLine = (id: string) => {
-    setItems(prev => (prev.length <= 1 ? prev : prev.filter(i => i.id !== id)));
+    setExtraLines(prev => prev.filter(i => i.id !== id));
   };
 
   const updateLine = (id: string, field: 'codigo' | 'cantidad', value: string | number) => {
-    setItems(prev =>
-      prev.map(i =>
-        i.id === id ? { ...i, [field]: value } : i
-      )
+    setExtraLines(prev =>
+      prev.map(i => (i.id === id ? { ...i, [field]: value } : i))
     );
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    const cleanCode = codigo.trim();
-    if (!cleanCode) {
-      setError(ERROR_CODIGO_OBLIGATORIO);
+    if (!codigoCaja || codigoCaja.trim().length === 0) return;
+
+    const qty1 = Number(cantidadPrimera);
+    if (Number.isNaN(qty1) || qty1 < 0) {
+      setError(ERROR_LINEA_CANTIDAD);
       return;
     }
 
-    const validation = validateScannedCode(cleanCode);
-    if (!validation.isValid || validation.type !== 'box') {
-      setError(validation.errorMessage || ERROR_CODIGO_CAJA);
-      return;
-    }
-
-    const validItems = items.filter(i => i.codigo.trim() !== '');
-    if (validItems.length === 0) {
-      setError(ERROR_AL_MENOS_UNA);
-      return;
-    }
-
-    for (const item of validItems) {
+    const validExtra = extraLines.filter(i => i.codigo.trim() !== '');
+    for (const item of validExtra) {
       const num = Number(item.cantidad);
       if (Number.isNaN(num) || num < 0) {
+        setError(ERROR_LINEA_CANTIDAD);
+        return;
+      }
+    }
+    for (const item of extraLines) {
+      if (item.codigo.trim() !== '' && Number.isNaN(Number(item.cantidad))) {
         setError(ERROR_LINEA_CANTIDAD);
         return;
       }
@@ -103,20 +97,20 @@ const CreateCustomBox: React.FC = () => {
     setError(null);
     setSuccessMessage(null);
 
-    const customInfo: Array<[string, number]> = validItems.map(i => [
-      i.codigo.trim(),
-      Number(i.cantidad),
-    ]);
+    const customInfo: Array<[string, number]> = [
+      [codigoCaja.trim(), qty1],
+      ...validExtra.map(i => [i.codigo.trim(), Number(i.cantidad)] as [string, number]),
+    ];
 
     try {
       const result = await submitCreateCustomBox(
-        cleanCode,
+        codigoCaja.trim(),
         customInfo,
         ubicacion || DEFAULT_UBICACION
       );
       setSuccessMessage(result.mensaje || SUCCESS_DEFAULT);
-      setCodigo('');
-      setItems([{ id: nextId(), codigo: '', cantidad: 0 }]);
+      setCantidadPrimera(0);
+      setExtraLines([]);
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Error al crear la caja custom'));
     } finally {
@@ -124,19 +118,15 @@ const CreateCustomBox: React.FC = () => {
     }
   };
 
-  const validation = validateScannedCode(codigo);
-  const showCodeError =
-    codigo.length > 0 && (!validation.isValid || validation.type !== 'box');
-  const hasValidItems = items.some(i => i.codigo.trim() !== '');
-  const allQuantitiesValid = items
-    .filter(i => i.codigo.trim() !== '')
-    .every(i => !Number.isNaN(Number(i.cantidad)) && Number(i.cantidad) >= 0);
   const canSubmit =
-    codigo.trim().length > 0 &&
-    validation.isValid &&
-    validation.type === 'box' &&
-    hasValidItems &&
-    allQuantitiesValid;
+    codigoCaja &&
+    codigoCaja.trim().length > 0 &&
+    !Number.isNaN(Number(cantidadPrimera)) &&
+    Number(cantidadPrimera) >= 0;
+
+  if (!codigoCaja || codigoCaja.trim().length === 0) {
+    return null;
+  }
 
   return (
     <Box>
@@ -144,9 +134,9 @@ const CreateCustomBox: React.FC = () => {
         <Button variant="outlined" size="small" onClick={handleBack}>
           ← Volver
         </Button>
-        <Typography variant="h5">{TITLE}</Typography>
+        <Typography variant="h5">Líneas (cantidad por código)</Typography>
         <Typography variant="body2" color="text.secondary">
-          {DESCRIPTION}
+          Código de caja: {codigoCaja}
         </Typography>
       </Stack>
 
@@ -165,33 +155,23 @@ const CreateCustomBox: React.FC = () => {
       <form onSubmit={handleSubmit}>
         <Stack spacing={2} mb={2}>
           <TextField
-            label={LABEL_CODIGO_CAJA}
-            value={codigo}
-            onChange={e => setCodigo(e.target.value)}
-            placeholder="16 dígitos"
-            error={showCodeError}
-            helperText={
-              showCodeError
-                ? validation.errorMessage || ERROR_CODIGO_CAJA
-                : undefined
-            }
-            disabled={loading}
-            autoFocus
-            inputProps={{ maxLength: 16 }}
-            fullWidth
-          />
-          <TextField
-            label={LABEL_UBICACION}
-            value={ubicacion}
-            onChange={e => setUbicacion(e.target.value)}
+            label={LABEL_CANTIDAD}
+            type="number"
+            value={cantidadPrimera === 0 ? '' : cantidadPrimera}
+            onChange={e => {
+              const v = e.target.value;
+              setCantidadPrimera(v === '' ? 0 : Number(v));
+            }}
+            placeholder="0"
             disabled={loading}
             fullWidth
+            inputProps={{ min: 0, step: 1 }}
           />
 
           <Typography variant="subtitle2" sx={{ mt: 1 }}>
-            Líneas (código y cantidad de huevos)
+            Más códigos (opcional)
           </Typography>
-          {items.map(item => (
+          {extraLines.map(item => (
             <Stack
               key={item.id}
               direction="row"
@@ -214,11 +194,7 @@ const CreateCustomBox: React.FC = () => {
                 value={item.cantidad === 0 ? '' : item.cantidad}
                 onChange={e => {
                   const v = e.target.value;
-                  updateLine(
-                    item.id,
-                    'cantidad',
-                    v === '' ? 0 : Number(v)
-                  );
+                  updateLine(item.id, 'cantidad', v === '' ? 0 : Number(v));
                 }}
                 placeholder="0"
                 disabled={loading}
@@ -231,7 +207,7 @@ const CreateCustomBox: React.FC = () => {
                 variant="outlined"
                 size="small"
                 onClick={() => removeLine(item.id)}
-                disabled={loading || items.length <= 1}
+                disabled={loading}
                 sx={{ alignSelf: 'center', mt: 0.5 }}
               >
                 {BTN_QUITAR}
@@ -247,6 +223,14 @@ const CreateCustomBox: React.FC = () => {
           >
             {BTN_AGREGAR}
           </Button>
+
+          <TextField
+            label={LABEL_UBICACION}
+            value={ubicacion}
+            onChange={e => setUbicacion(e.target.value)}
+            disabled={loading}
+            fullWidth
+          />
         </Stack>
 
         <Button
@@ -262,4 +246,4 @@ const CreateCustomBox: React.FC = () => {
   );
 };
 
-export default CreateCustomBox;
+export default CrearCajaCustomLineas;

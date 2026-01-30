@@ -1,267 +1,177 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useScanContext } from '../../../context/ScanContext';
 import { validateScannedCode } from '../../../utils/validators';
-import './RegistrarCaja.css';
+import { getErrorMessage } from '../../../utils/errorHandler';
+import { submitBoxRegistration } from '../../../api';
+import { useScanMode } from '../../../hooks/useScanMode';
+import {
+  Box,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Alert,
+} from '../../../components/ui';
+
+const TITLE = 'Escanear Nueva Caja';
+const DESCRIPTION = 'Escanea o ingresa el código de la caja (16 dígitos) y el producto.';
+const DEFAULT_UBICACION = 'PACKING';
 
 const RegistrarCaja: React.FC = () => {
   const navigate = useNavigate();
   const [codigo, setCodigo] = useState('');
-  const [scanBoxMode, setScanBoxMode] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { data, loading, error, processScan, reset } = useScanContext();
+  const [producto, setProducto] = useState('');
+  const [ubicacion, setUbicacion] = useState(DEFAULT_UBICACION);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { scanMode, toggleScanMode, inputRef } = useScanMode();
+
+  const handleBack = () => navigate('/dashboard');
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    if (!codigo.trim()) {
+    const cleanCode = codigo.trim();
+    if (!cleanCode) {
+      setError('El código es obligatorio');
       return;
     }
 
-    const validation = validateScannedCode(codigo);
-    if (!validation.isValid) {
+    const validation = validateScannedCode(cleanCode);
+    if (!validation.isValid || validation.type !== 'box') {
+      setError(
+        validation.errorMessage || 'El código debe ser de caja (16 dígitos)'
+      );
       return;
     }
 
-    // Si no es una caja, no procesar
-    if (validation.type !== 'box') {
+    if (!producto.trim()) {
+      setError('El producto es obligatorio');
       return;
     }
 
-    await processScan({
-      codigo: codigo.trim(),
-      ubicacion: 'PACKING', // Por defecto PACKING
-    });
-  };
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
 
-  const handleBack = () => {
-    navigate('/dashboard');
-  };
-
-  const toggleScanBoxMode = () => {
-    setScanBoxMode(prev => !prev);
-  };
-
-  // Mantener foco en input cuando está en modo scanner
-  useEffect(() => {
-    if (scanBoxMode && inputRef.current) {
-      inputRef.current.focus();
+    try {
+      const result = await submitBoxRegistration({
+        codigo: cleanCode,
+        producto: producto.trim(),
+        ubicacion: ubicacion || DEFAULT_UBICACION,
+      });
+      setSuccessMessage(result.mensaje || 'Caja registrada exitosamente');
+      setCodigo('');
+      if (scanMode && inputRef.current) {
+        inputRef.current.focus();
+      }
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Error al registrar la caja'));
+    } finally {
+      setLoading(false);
     }
-  }, [scanBoxMode, codigo]);
-
-  // Limpiar código después de un escaneo exitoso
-  useEffect(() => {
-    if (data && data.success) {
-      const timer = setTimeout(() => {
-        setCodigo('');
-        // Mantener foco si está en modo scanner
-        if (scanBoxMode && inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 1000); // Reducido a 1 segundo para mejor flujo
-      return () => clearTimeout(timer);
-    }
-  }, [data, scanBoxMode]);
+  };
 
   const validation = validateScannedCode(codigo);
-  const showValidationError = codigo.length > 0 && !validation.isValid;
-  const showTypeError =
-    codigo.length > 0 && validation.isValid && validation.type !== 'box';
+  const showCodeError =
+    codigo.length > 0 && (!validation.isValid || validation.type !== 'box');
+  const canSubmit =
+    codigo.trim().length > 0 &&
+    producto.trim().length > 0 &&
+    validation.isValid &&
+    validation.type === 'box';
 
   return (
-    <div className='registrar-caja-content'>
-      <div className='registrar-caja-header'>
-        <button onClick={handleBack} className='back-btn'>
+    <Box>
+      <Stack spacing={2} mb={2}>
+        <Button variant="outlined" size="small" onClick={handleBack}>
           ← Volver
-        </button>
-        <h1>Escanear Nueva Caja o Carro</h1>
-        <p>Escanea o ingresa el código de la nueva caja o carro para PACKING</p>
+        </Button>
+        <Typography variant="h5">{TITLE}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          {DESCRIPTION}
+        </Typography>
 
-        {/* Toggle Scanner Mode */}
-        <div className='scanner-mode-toggle'>
-          <button
-            onClick={toggleScanBoxMode}
-            className={`toggle-btn ${scanBoxMode ? 'active' : ''}`}
-            disabled={loading}
-          >
-            <span className='toggle-icon'>{scanBoxMode ? '📱' : '⚡'}</span>
-            <span className='toggle-text'>
-              {scanBoxMode ? 'Modo Scanner: ON' : 'Modo Scanner: OFF'}
-            </span>
-          </button>
-          {scanBoxMode && (
-            <p className='scanner-mode-info'>
-              🔍 Modo scanner activo - El campo permanecerá enfocado para
-              escaneo consecutivo
-            </p>
-          )}
-        </div>
-      </div>
+        <Button
+          variant={scanMode ? 'contained' : 'outlined'}
+          size="small"
+          onClick={toggleScanMode}
+          disabled={loading}
+        >
+          {scanMode ? '📱 Modo Scanner: ON' : '⚡ Modo Scanner: OFF'}
+        </Button>
+        {scanMode && (
+          <Typography variant="caption" color="text.secondary">
+            🔍 Modo scanner activo - El campo código permanecerá enfocado
+          </Typography>
+        )}
+      </Stack>
 
       {error && (
-        <div className='error-section'>
-          <div className='error-message'>
-            <span className='error-icon'>⚠️</span>
-            <span className='error-text'>{error}</span>
-            <button onClick={reset} className='error-close'>
-              ✕
-            </button>
-          </div>
-        </div>
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
       )}
 
-      {/* Resultado exitoso */}
-      {data && data.success && (
-        <div className='success-section'>
-          <div className='success-message'>
-            <span className='success-icon'>✅</span>
-            <div className='success-content'>
-              <h3>
-                {data.data?._isCart
-                  ? '¡Carro procesado exitosamente!'
-                  : '¡Caja procesada exitosamente!'}
-              </h3>
-              <div className='success-details'>
-                <p>
-                  <strong>Código:</strong> {data.data?.codigo}
-                </p>
-                <p>
-                  <strong>Tipo:</strong>{' '}
-                  {data.data?._isCart ? 'Carro' : 'Caja'}
-                </p>
-                <p>
-                  <strong>Ubicación:</strong> {data.data?.ubicacion}
-                </p>
-                {data.data?.estado && (
-                  <p>
-                    <strong>Estado:</strong> {data.data?.estado}
-                  </p>
-                )}
-              </div>
-              <p className='success-note'>
-                Puede escanear otra caja o carro
-              </p>
-            </div>
-          </div>
-        </div>
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          <Typography variant="subtitle2">{successMessage}</Typography>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className='scan-form'>
-        <div className='form-section'>
-          <div className='form-group'>
-            <label htmlFor='codigo' className='form-label'>
-              Código de Caja o Carro
-            </label>
-            <input
-              ref={inputRef}
-              type='text'
-              id='codigo'
-              value={codigo}
-              onChange={e => setCodigo(e.target.value)}
-              onBlur={() => {
-                // Si está en modo scanner, volver a enfocar después de un breve delay
-                if (scanBoxMode) {
-                  setTimeout(() => {
-                    if (inputRef.current) {
-                      inputRef.current.focus();
-                    }
-                  }, 100);
-                }
-              }}
-              placeholder={
-                scanBoxMode
-                  ? 'Escanea códigos consecutivamente...'
-                  : 'Escanea o ingresa código de caja/carro (16 dígitos)'
-              }
-              className={`form-input code-input ${showValidationError || showTypeError ? 'error' : ''} ${scanBoxMode ? 'scanner-mode' : ''}`}
-              disabled={loading}
-              autoFocus
-              maxLength={16}
-            />
+      <form onSubmit={handleSubmit}>
+        <Stack spacing={2} mb={2}>
+          <TextField
+            inputRef={inputRef}
+            label="Código de caja"
+            value={codigo}
+            onChange={e => setCodigo(e.target.value)}
+            placeholder={
+              scanMode
+                ? 'Escanea el código...'
+                : 'Escanea o ingresa 16 dígitos'
+            }
+            error={showCodeError}
+            helperText={
+              showCodeError
+                ? validation.errorMessage ||
+                  'Solo se permiten códigos de caja (16 dígitos)'
+                : undefined
+            }
+            disabled={loading}
+            autoFocus
+            inputProps={{ maxLength: 16 }}
+            fullWidth
+          />
+          <TextField
+            label="Producto"
+            value={producto}
+            onChange={e => setProducto(e.target.value)}
+            placeholder="Nombre del producto"
+            disabled={loading}
+            fullWidth
+            required
+          />
+          <TextField
+            label="Ubicación"
+            value={ubicacion}
+            onChange={e => setUbicacion(e.target.value)}
+            disabled={loading}
+            fullWidth
+          />
+        </Stack>
 
-            {showValidationError && (
-              <span className='validation-error'>
-                {validation.errorMessage}
-              </span>
-            )}
-
-            {showTypeError && (
-              <span className='validation-error'>
-                Este código es de un pallet. Solo se permiten códigos de caja o carro
-                (16 dígitos).
-              </span>
-            )}
-
-            {codigo.length > 0 &&
-              validation.isValid &&
-              validation.type === 'box' && (
-                <span className='validation-success'>
-                  ✓ Código válido (caja o carro) - Presiona Enter para procesar
-                </span>
-              )}
-          </div>
-
-          <div className='info-box'>
-            <h4>Información</h4>
-            <ul>
-              <li>
-                • Ubicación: <strong>PACKING</strong> (automática)
-              </li>
-              <li>
-                • Solo códigos de caja o carro (16 dígitos)
-              </li>
-              <li>
-                • El sistema detecta automáticamente si es caja o carro según el formato
-              </li>
-              <li>
-                • Presiona <kbd>Enter</kbd> para procesar
-              </li>
-              {scanBoxMode ? (
-                <li>
-                  • <strong>Modo Scanner:</strong> Campo siempre enfocado para
-                  escaneo consecutivo
-                </li>
-              ) : (
-                <li>
-                  • Activa el <strong>Modo Scanner</strong> para escaneo con
-                  dispositivo físico
-                </li>
-              )}
-            </ul>
-          </div>
-
-          {/* Códigos de prueba para desarrollo */}
-          <div className='test-codes'>
-            <p>Códigos de prueba:</p>
-            <div className='test-buttons'>
-              <button
-                type='button'
-                onClick={() => setCodigo('1234567890123456')}
-                className='test-btn'
-                disabled={loading}
-              >
-                Caja/Carro: 1234567890123456
-              </button>
-              <button
-                type='button'
-                onClick={() => setCodigo('9876543210987654')}
-                className='test-btn'
-                disabled={loading}
-              >
-                Caja/Carro: 9876543210987654
-              </button>
-            </div>
-          </div>
-        </div>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={loading || !canSubmit}
+          fullWidth
+        >
+          {loading ? 'Registrando...' : 'Registrar caja'}
+        </Button>
       </form>
-
-      {loading && (
-        <div className='loading-overlay'>
-          <div className='loading-spinner'></div>
-          <p>Procesando caja o carro...</p>
-        </div>
-      )}
-    </div>
+    </Box>
   );
 };
 

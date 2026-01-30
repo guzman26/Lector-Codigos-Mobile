@@ -12,7 +12,20 @@ import {
   EMPRESA_OPTIONS,
   FORM_FIELDS,
 } from './PalletFormConstants';
-import './CreatePalletForm.css';
+import {
+  Box,
+  Stack,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
+  Button,
+  Alert,
+} from '../../../components/ui';
 
 /**
  * Form for creating a new pallet
@@ -33,9 +46,6 @@ export const CreatePalletForm: React.FC<CreatePalletFormProps> = ({
     resetForm,
   } = usePalletForm(onPalletCreated);
 
-  /**
-   * Handle cancel button click
-   */
   const handleCancel = () => {
     resetForm();
     if (onCancel) {
@@ -43,207 +53,196 @@ export const CreatePalletForm: React.FC<CreatePalletFormProps> = ({
     }
   };
 
+  const adapterChange = (name: string, value: string | number | boolean) =>
+    handleInputChange({
+      target: { name, value: String(value), type: typeof value === 'boolean' ? 'checkbox' : 'text' },
+    } as React.ChangeEvent<HTMLInputElement>);
+
   return (
-    <div className='create-pallet-form-container'>
+    <Box>
       {alertMessage && alertType && (
-        <div className={`alert alert-${alertType}`}>
-          <span className='alert-icon'>
-            {alertType === 'success' ? '✅' : '⚠️'}
-          </span>
-          <span className='alert-message'>{alertMessage}</span>
-        </div>
+        <Alert severity={alertType} sx={{ mb: 2 }}>
+          {alertMessage}
+        </Alert>
       )}
 
-      <form className='create-pallet-form' onSubmit={handleSubmit}>
-        <div className='form-header'>
-          <h2>🚛 Crear Nuevo Pallet</h2>
-          <p>Complete los datos para generar el código del pallet</p>
-        </div>
+      <form onSubmit={handleSubmit}>
+        <Typography variant="h6" gutterBottom>🚛 Crear Nuevo Pallet</Typography>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          Complete los datos para generar el código del pallet
+        </Typography>
 
-        <div className='code-input-toggle'>
-          <label className='toggle-label'>
-            <input
-              type='checkbox'
-              name='useManualCode'
+        <FormControlLabel
+          control={
+            <Checkbox
+              name="useManualCode"
               checked={formData.useManualCode}
-              onChange={handleInputChange}
-              className='toggle-input'
+              onChange={(e) =>
+                handleInputChange({
+                  target: {
+                    name: 'useManualCode',
+                    type: 'checkbox',
+                    checked: e.target.checked,
+                  },
+                } as React.ChangeEvent<HTMLInputElement>)
+              }
             />
-            <span className='toggle-text'>
-              {formData.useManualCode
-                ? 'Ingresar código manualmente'
-                : 'Generar código automáticamente'}
-            </span>
-          </label>
-        </div>
+          }
+          label={
+            formData.useManualCode
+              ? 'Ingresar código manualmente'
+              : 'Generar código automáticamente'
+          }
+          sx={{ mb: 2, display: 'block' }}
+        />
 
         {formData.useManualCode ? (
-          <div className='manual-code-section'>
-            <div className='form-group'>
-              <label htmlFor='codigoManual' className='form-label'>
-                Código Base del Pallet (11 dígitos) <span className='required'>*</span>
-              </label>
-              <input
-                type='text'
-                id='codigoManual'
-                name='codigoManual'
-                value={formData.codigoManual}
-                onChange={handleInputChange}
-                placeholder='Ingrese el código base de 11 dígitos'
-                className={`form-input ${errors.codigoManual ? 'error' : ''}`}
-                maxLength={11}
-                pattern='[0-9]{11}'
-                required
-              />
-              {errors.codigoManual && (
-                <span className='error-text'>{errors.codigoManual}</span>
-              )}
-            </div>
-          </div>
+          <Stack spacing={2} sx={{ mb: 2 }}>
+            <TextField
+              name="codigoManual"
+              label="Código Base del Pallet (11 dígitos) *"
+              value={formData.codigoManual}
+              onChange={handleInputChange}
+              placeholder="Ingrese el código base de 11 dígitos"
+              error={Boolean(errors.codigoManual)}
+              helperText={errors.codigoManual}
+              inputProps={{ maxLength: 11, pattern: '[0-9]{11}' }}
+              required
+              fullWidth
+            />
+          </Stack>
         ) : (
-          <div className='form-grid'>
-            <div className='form-group'>
-              <label htmlFor='turno' className='form-label'>
-                Turno <span className='required'>*</span>
-              </label>
-              <select
-                id='turno'
-                name='turno'
+          <Stack spacing={2} sx={{ mb: 2 }}>
+            <FormControl fullWidth error={Boolean(errors.turno)} size="small">
+              <InputLabel>Turno *</InputLabel>
+              <Select
+                name="turno"
                 value={formData.turno}
-                onChange={handleInputChange}
-                className={`form-select ${errors.turno ? 'error' : ''}`}
+                label="Turno *"
+                onChange={(e) =>
+                  adapterChange('turno', e.target.value as string)
+                }
                 required
               >
-                {TURNO_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                {TURNO_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
                 ))}
-              </select>
+              </Select>
               {errors.turno && (
-                <span className='error-text'>{errors.turno}</span>
+                <Typography variant="caption" color="error">
+                  {errors.turno}
+                </Typography>
               )}
-            </div>
-
-            <div className='form-group'>
-              <label htmlFor='maxBoxes' className='form-label'>
-                Capacidad de cajas (máximo 60)
-              </label>
-              <input
-                type='number'
-                id='maxBoxes'
-                name={FORM_FIELDS.MAX_BOXES}
-                value={formData.maxBoxes}
-                onChange={handleInputChange}
-                className='form-input'
-                min={1}
-                max={60}
-                placeholder='60'
-              />
-              {errors.maxBoxes && (
-                <span className='error-text'>{errors.maxBoxes}</span>
-              )}
-            </div>
-            <div className='form-group'>
-              <label htmlFor='calibre' className='form-label'>
-                Calibre <span className='required'>*</span>
-              </label>
-              <select
-                id='calibre'
-                name='calibre'
+            </FormControl>
+            <TextField
+              name={FORM_FIELDS.MAX_BOXES}
+              label="Capacidad de cajas (máximo 60)"
+              type="number"
+              value={formData.maxBoxes}
+              onChange={handleInputChange}
+              placeholder="60"
+              inputProps={{ min: 1, max: 60 }}
+              fullWidth
+            />
+            <FormControl fullWidth error={Boolean(errors.calibre)} size="small">
+              <InputLabel>Calibre *</InputLabel>
+              <Select
+                name="calibre"
                 value={formData.calibre}
-                onChange={handleInputChange}
-                className={`form-select ${errors.calibre ? 'error' : ''}`}
+                label="Calibre *"
+                onChange={(e) =>
+                  adapterChange('calibre', e.target.value as string)
+                }
                 required
               >
-                {CALIBRE_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                {CALIBRE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
                 ))}
-              </select>
+              </Select>
               {errors.calibre && (
-                <span className='error-text'>{errors.calibre}</span>
+                <Typography variant="caption" color="error">
+                  {errors.calibre}
+                </Typography>
               )}
-            </div>
-
-            <div className='form-group'>
-              <label htmlFor='formato' className='form-label'>
-                Formato <span className='required'>*</span>
-              </label>
-              <select
-                id='formato'
-                name='formato'
+            </FormControl>
+            <FormControl fullWidth error={Boolean(errors.formato)} size="small">
+              <InputLabel>Formato *</InputLabel>
+              <Select
+                name="formato"
                 value={formData.formato}
-                onChange={handleInputChange}
-                className={`form-select ${errors.formato ? 'error' : ''}`}
+                label="Formato *"
+                onChange={(e) =>
+                  adapterChange('formato', e.target.value as string)
+                }
                 required
               >
-                {FORMATO_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                {FORMATO_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
                 ))}
-              </select>
+              </Select>
               {errors.formato && (
-                <span className='error-text'>{errors.formato}</span>
+                <Typography variant="caption" color="error">
+                  {errors.formato}
+                </Typography>
               )}
-            </div>
-
-            <div className='form-group'>
-              <label htmlFor='empresa' className='form-label'>
-                Empresa <span className='required'>*</span>
-              </label>
-              <select
-                id='empresa'
+            </FormControl>
+            <FormControl fullWidth error={Boolean(errors.empresa)} size="small">
+              <InputLabel>Empresa *</InputLabel>
+              <Select
                 name={FORM_FIELDS.EMPRESA}
                 value={formData.empresa}
-                onChange={handleInputChange}
-                className={`form-select ${errors.empresa ? 'error' : ''}`}
+                label="Empresa *"
+                onChange={(e) =>
+                  adapterChange(FORM_FIELDS.EMPRESA, e.target.value as string)
+                }
                 required
               >
-                {EMPRESA_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                {EMPRESA_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
                 ))}
-              </select>
+              </Select>
               {errors.empresa && (
-                <span className='error-text'>{errors.empresa}</span>
+                <Typography variant="caption" color="error">
+                  {errors.empresa}
+                </Typography>
               )}
-            </div>
-          </div>
+            </FormControl>
+          </Stack>
         )}
 
         {generatedCode && <PalletCodePreview code={generatedCode} />}
 
-        <div className='form-buttons'>
-          <button
-            type='button'
-            className='btn btn-secondary'
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
+          <Button
+            type="button"
+            variant="outlined"
             onClick={handleCancel}
             disabled={isSubmitting}
+            fullWidth
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             Cancelar
-          </button>
-
-          <button
-            type='submit'
-            className={`btn btn-primary ${isSubmitting ? 'loading' : ''}`}
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
             disabled={isSubmitting || !generatedCode}
+            fullWidth
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
-            {isSubmitting ? (
-              <>
-                <span className='loading-spinner'></span>
-                Creando...
-              </>
-            ) : (
-              'Crear Pallet'
-            )}
-          </button>
-        </div>
+            {isSubmitting ? 'Creando...' : 'Crear Pallet'}
+          </Button>
+        </Stack>
       </form>
-    </div>
+    </Box>
   );
 };
 

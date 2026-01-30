@@ -8,6 +8,11 @@
 import { apiClient } from './apiClient';
 import { consolidatedApi } from './consolidatedClient';
 import {
+  VALID_INVENTORY_LOCATIONS,
+  PALLET_CODE_LENGTH,
+  CART_CODE_LENGTH,
+} from './inventoryConstants';
+import {
   validateScannedCode,
   validateIssueDescription,
 } from '../utils/validators';
@@ -353,34 +358,51 @@ export const togglePalletStatus = async (
 };
 
 /**
- * Move a pallet to a new location
+ * Validates codigo and ubicacion for move operations. Throws ApiClientError on failure.
  */
-export const movePallet = async (
-  request: MovePalletRequest
-): Promise<ApiResponse<MovePalletResult>> => {
-  const validation = validateScannedCode(request.codigo);
-
-  if (!validation.isValid || validation.type !== 'pallet') {
+function validateMoveToLocation(
+  codigo: string,
+  ubicacion: string,
+  validLocations: readonly string[],
+  codeLength: number,
+  resourceLabel: string
+): void {
+  const cleanCode = codigo.trim();
+  const regex = new RegExp(`^\\d{${codeLength}}$`);
+  if (!regex.test(cleanCode)) {
     throw new apiClient.ApiClientError(
-      'El código debe ser un código de pallet válido (14 dígitos)',
+      `El código debe ser un código de ${resourceLabel} válido (${codeLength} dígitos)`,
       'VALIDATION_ERROR'
     );
   }
-
-  const validLocations = ['PACKING', 'TRANSITO', 'BODEGA', 'PREVENTA', 'VENTA'];
-  if (!validLocations.includes(request.ubicacion)) {
+  if (!validLocations.includes(ubicacion)) {
     throw new apiClient.ApiClientError(
       'Ubicación inválida',
       'VALIDATION_ERROR'
     );
   }
+}
 
+/**
+ * Move a pallet to a new location
+ */
+export const movePallet = async (
+  request: MovePalletRequest
+): Promise<ApiResponse<MovePalletResult>> => {
+  validateMoveToLocation(
+    request.codigo,
+    request.ubicacion,
+    VALID_INVENTORY_LOCATIONS,
+    PALLET_CODE_LENGTH,
+    'pallet'
+  );
+
+  const codigo = request.codigo.trim();
   const response = await consolidatedApi.inventory.pallet.move({
-    codigo: request.codigo.trim(),
+    codigo,
     ubicacion: request.ubicacion,
   });
 
-  // Adapt response
   if (response.success) {
     return {
       success: true,
@@ -388,7 +410,7 @@ export const movePallet = async (
         success: true,
         message: response.message || 'Pallet movido exitosamente',
         data: {
-          codigo: request.codigo.trim(),
+          codigo,
           ubicacion: request.ubicacion,
           estado: 'activo',
           timestamp: new Date().toISOString(),
@@ -504,6 +526,91 @@ export const submitBoxRegistration = async (
   return response.data;
 };
 
+/**
+ * Create a custom box with customInfo (list of [codigo, cantidad de huevos]).
+ * Backend creates a single-box pallet for it. Does not send calibre/formato/empresa.
+ */
+export const createCustomBox = async (
+  codigo: string,
+  customInfo: Array<[string, number]>,
+  ubicacion?: string
+): Promise<ApiResponse<RegisterBoxResult>> => {
+  const cleanCode = (codigo || '').trim();
+
+  const validation = validateScannedCode(cleanCode);
+  if (!validation.isValid || validation.type !== 'box') {
+    throw new apiClient.ApiClientError(
+      'El código debe ser de caja (16 dígitos)',
+      'VALIDATION_ERROR'
+    );
+  }
+
+  if (!Array.isArray(customInfo) || customInfo.length === 0) {
+    throw new apiClient.ApiClientError(
+      'Debe haber al menos una línea con código y cantidad',
+      'VALIDATION_ERROR'
+    );
+  }
+
+  for (let i = 0; i < customInfo.length; i++) {
+    const [code, qty] = customInfo[i];
+    if (typeof code !== 'string' || !code.trim()) {
+      throw new apiClient.ApiClientError(
+        `Línea ${i + 1}: el código no puede estar vacío`,
+        'VALIDATION_ERROR'
+      );
+    }
+    const num = Number(qty);
+    if (Number.isNaN(num) || num < 0) {
+      throw new apiClient.ApiClientError(
+        `Línea ${i + 1}: la cantidad debe ser un número >= 0`,
+        'VALIDATION_ERROR'
+      );
+    }
+  }
+
+  const params: CreateBoxParams = {
+    codigo: cleanCode,
+    ubicacion: ubicacion || 'PACKING',
+    customInfo: JSON.stringify(customInfo),
+  };
+
+  const response = await consolidatedApi.inventory.box.create(params);
+
+  if (response.success && response.data) {
+    return {
+      success: true,
+      data: {
+        id: (response.data as any).codigo || `BOX-${Date.now()}`,
+        codigo: cleanCode,
+        mensaje: response.message || 'Caja custom creada exitosamente',
+        fechaRegistro: new Date().toISOString(),
+        estado: 'registrado',
+      },
+      message: response.message,
+    };
+  }
+
+  return response as ApiResponse<RegisterBoxResult>;
+};
+
+export const submitCreateCustomBox = async (
+  codigo: string,
+  customInfo: Array<[string, number]>,
+  ubicacion?: string
+): Promise<RegisterBoxResult> => {
+  const response = await createCustomBox(codigo, customInfo, ubicacion);
+
+  if (!response.success || !response.data) {
+    throw new apiClient.ApiClientError(
+      response.error || 'No se pudo crear la caja custom',
+      'NO_DATA'
+    );
+  }
+
+  return response.data;
+};
+
 export const submitScan = async (
   scanData: ProcessScanRequest
 ): Promise<ProcessScanResult> => {
@@ -555,29 +662,24 @@ export const submitMovePallet = async (
  */
 export const moveCart = async (
   codigo: string,
-  ubicacion: string
+  ubicacion: string,
+  userId?: string
 ): Promise<ApiResponse<MovePalletResult>> => {
   const cleanCode = (codigo || '').trim();
+  validateMoveToLocation(
+    cleanCode,
+    ubicacion,
+    VALID_INVENTORY_LOCATIONS,
+    CART_CODE_LENGTH,
+    'carro'
+  );
 
-  if (!/^\d{16}$/.test(cleanCode)) {
-    throw new apiClient.ApiClientError(
-      'El código debe ser un código de carro válido (16 dígitos)',
-      'VALIDATION_ERROR'
-    );
-  }
-
-  const validLocations = ['PACKING', 'TRANSITO', 'BODEGA', 'PREVENTA', 'VENTA'];
-  if (!validLocations.includes(ubicacion)) {
-    throw new apiClient.ApiClientError(
-      'Ubicación inválida',
-      'VALIDATION_ERROR'
-    );
-  }
-
-  const response = await consolidatedApi.inventory.cart.move({
+  const params = {
     codigo: cleanCode,
     ubicacion,
-  });
+    ...(userId && { userId }),
+  };
+  const response = await consolidatedApi.inventory.cart.move(params);
 
   if (response.success) {
     return {
@@ -601,9 +703,10 @@ export const moveCart = async (
 
 export const submitMoveCart = async (
   codigo: string,
-  ubicacion: string = 'TRANSITO'
+  ubicacion: string = 'TRANSITO',
+  userId?: string
 ): Promise<MovePalletResult> => {
-  const response = await moveCart(codigo, ubicacion);
+  const response = await moveCart(codigo, ubicacion, userId);
 
   if (!response.success || !response.data) {
     throw new apiClient.ApiClientError(
@@ -624,6 +727,8 @@ export const endpoints = {
   submitIssueReport,
   registerBox,
   submitBoxRegistration,
+  createCustomBox,
+  submitCreateCustomBox,
   processScan,
   submitScan,
   createPallet,
