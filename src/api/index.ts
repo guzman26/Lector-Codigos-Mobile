@@ -31,6 +31,7 @@ export type {
   MoveBoxParams,
   GetPalletsParams,
   CreatePalletParams,
+  CreateCartParams,
   ClosePalletParams,
   MovePalletParams,
   GetOrdersParams,
@@ -62,6 +63,8 @@ export {
   postIssue,
   submitIssueReport,
   createPallet,
+  createCart,
+  submitCreateCart,
   togglePalletStatus,
   submitPalletStatusToggle,
 } from './endpoints';

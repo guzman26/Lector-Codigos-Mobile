@@ -72,6 +72,9 @@ const Dashboard: React.FC = () => {
         <Button variant="outlined" onClick={() => navigate('/enviar-carro-transito')} fullWidth>
           Enviar Carro a Transito
         </Button>
+        <Button variant="outlined" onClick={() => navigate('/agregar-carro')} fullWidth>
+          Agregar Carro
+        </Button>
         <Button variant="outlined" onClick={() => navigate('/pallets-activos')} fullWidth>
           Pallets Activos
         </Button>

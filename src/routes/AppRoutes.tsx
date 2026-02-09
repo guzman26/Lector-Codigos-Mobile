@@ -8,6 +8,7 @@ import CreatePalletForm from '../views/Scanning/CreatePalletForm/CreatePalletFor
 import PalletsList from '../views/Scanning/PalletsList/PalletsList';
 import SendPalletToTransit from '../views/Scanning/SendPalletToTransit/SendPalletToTransit';
 import SendCartToTransit from '../views/Scanning/SendCartToTransit';
+import CreateCartForm from '../views/Scanning/CreateCartForm';
 import AgregarCodigoCaja from '../views/Scanning/CreateCustomBox/AgregarCodigoCaja';
 import CrearCajaCustomLineas from '../views/Scanning/CreateCustomBox/CrearCajaCustomLineas';
 import RegistrarCaja from '../views/Scanning/RegistrarCajaNueva';
@@ -28,6 +29,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/pallets-activos" element={<PalletsList />} />
           <Route path="/enviar-pallet-transito" element={<SendPalletToTransit />} />
           <Route path="/enviar-carro-transito" element={<SendCartToTransit />} />
+          <Route path="/agregar-carro" element={<CreateCartForm />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Layout>

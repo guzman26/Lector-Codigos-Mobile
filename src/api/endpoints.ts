@@ -35,8 +35,16 @@ import type {
   ClosePalletResult,
   CreateBoxParams,
   CreatePalletParams,
+  CreateCartParams,
   GetPalletsParams,
 } from './types';
+
+interface CreateCartResult {
+  codigo: string;
+  mensaje: string;
+  fechaRegistro: string;
+  estado: 'registrado' | 'error';
+}
 
 /**
  * Gets information from a scanned code (box or pallet)
@@ -657,6 +665,84 @@ export const submitMovePallet = async (
   return response.data;
 };
 
+function validateCartBarcodeForCreate(codigo: string): string {
+  const cleanCode = (codigo || '').trim();
+  const codeRegex = new RegExp(`^\\d{${CART_CODE_LENGTH}}$`);
+
+  if (!codeRegex.test(cleanCode)) {
+    throw new apiClient.ApiClientError(
+      `El código debe tener ${CART_CODE_LENGTH} dígitos numéricos`,
+      'VALIDATION_ERROR'
+    );
+  }
+
+  // Cart codes use format 4/5/6 in position 12 (index 11) per schema.
+  const formatDigit = cleanCode.charAt(11);
+  if (!['4', '5', '6'].includes(formatDigit)) {
+    throw new apiClient.ApiClientError(
+      'El código escaneado no corresponde a un carro (formato debe ser 4, 5 o 6)',
+      'VALIDATION_ERROR'
+    );
+  }
+
+  return cleanCode;
+}
+
+/**
+ * Create a new cart from scanned barcode (16 digits).
+ * Backend expects a 13-digit baseCode and auto-generates the 3-digit counter.
+ */
+export const createCart = async (
+  codigo: string,
+  ubicacion: string = 'PACKING',
+  userId?: string
+): Promise<ApiResponse<CreateCartResult>> => {
+  const cleanCode = validateCartBarcodeForCreate(codigo);
+  const baseCode = cleanCode.slice(0, 13);
+
+  const params: CreateCartParams = {
+    baseCode,
+    ubicacion,
+    ...(userId && { userId }),
+  };
+
+  const response = await consolidatedApi.inventory.cart.create(params);
+
+  if (response.success) {
+    const createdCode = (response.data as any)?.data?.codigo || (response.data as any)?.codigo;
+
+    return {
+      success: true,
+      data: {
+        codigo: createdCode || cleanCode,
+        mensaje: response.message || 'Carro creado exitosamente',
+        fechaRegistro: new Date().toISOString(),
+        estado: 'registrado',
+      },
+      message: response.message,
+    };
+  }
+
+  return response as ApiResponse<CreateCartResult>;
+};
+
+export const submitCreateCart = async (
+  codigo: string,
+  ubicacion: string = 'PACKING',
+  userId?: string
+): Promise<CreateCartResult> => {
+  const response = await createCart(codigo, ubicacion, userId);
+
+  if (!response.success || !response.data) {
+    throw new apiClient.ApiClientError(
+      response.error || 'No se pudo crear el carro',
+      'NO_DATA'
+    );
+  }
+
+  return response.data;
+};
+
 /**
  * Move a cart to a new location
  */
@@ -734,6 +820,8 @@ export const endpoints = {
   createPallet,
   togglePalletStatus,
   submitPalletStatusToggle,
+  createCart,
+  submitCreateCart,
   movePallet,
   submitMovePallet,
   moveCart,
@@ -747,4 +835,3 @@ export const pallets = {
   getActivePallets,
   closePallet,
 };
-

@@ -180,6 +180,13 @@ export const inventoryApi = {
     },
 
     /**
+     * Create a new cart
+     */
+    create: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/inventory', 'cart', 'create', params);
+    },
+
+    /**
      * Move a cart to a different location
      */
     move: async <T = any>(params: any): Promise<ApiResponse<T>> => {
@@ -443,4 +450,3 @@ export const consolidatedApi = {
   admin: adminApi,
   healthCheck,
 };
-

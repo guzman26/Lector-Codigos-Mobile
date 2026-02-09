@@ -368,6 +368,19 @@ export interface CreatePalletParams {
 }
 
 /**
+ * Cart resource - Create action params
+ * backend expects baseCode (13 digits) and generates the final 16-digit code.
+ */
+export interface CreateCartParams {
+  baseCode: string; // 13-digit base code (without counter)
+  ubicacion?: string;
+  cantidadBandejas?: number;
+  cantidadHuevos?: number;
+  formatId?: string | null;
+  userId?: string;
+}
+
+/**
  * Pallet resource - Close action params
  */
 export interface ClosePalletParams {
