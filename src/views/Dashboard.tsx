@@ -81,6 +81,9 @@ const Dashboard: React.FC = () => {
         <Button variant="outlined" onClick={() => navigate('/crear-pallet')} fullWidth>
           Crear Pallet
         </Button>
+        <Button variant="outlined" onClick={() => navigate('/dispatch/drafts')} fullWidth>
+          Borradores de Despacho
+        </Button>
         <Button variant="outlined" onClick={handleReportClick} fullWidth>
           Registrar Problema
         </Button>

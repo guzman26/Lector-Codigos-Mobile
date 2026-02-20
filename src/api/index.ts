@@ -60,6 +60,8 @@ export {
   submitMovePallet,
   moveCart,
   submitMoveCart,
+  getDraftDispatches,
+  updateDispatchPallets,
   postIssue,
   submitIssueReport,
   createPallet,

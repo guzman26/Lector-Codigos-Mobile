@@ -46,6 +46,21 @@ interface CreateCartResult {
   estado: 'registrado' | 'error';
 }
 
+export type DispatchState = 'DRAFT' | 'APPROVED' | 'CANCELLED';
+
+export interface DispatchRecord {
+  id: string;
+  folio: string;
+  estado: DispatchState;
+  pallets: string[];
+  [key: string]: any;
+}
+
+export interface GetDraftDispatchesParams {
+  limit?: number;
+  lastKey?: string;
+}
+
 /**
  * Gets information from a scanned code (box or pallet)
  */
@@ -805,6 +820,69 @@ export const submitMoveCart = async (
 };
 
 /**
+ * Get DRAFT dispatches for mobile loading flow
+ */
+export const getDraftDispatches = async (
+  params: GetDraftDispatchesParams = {}
+): Promise<ApiResponse<{ items: DispatchRecord[]; nextKey?: string | null }>> => {
+  const response = await consolidatedApi.inventory.dispatch.get({
+    estado: 'DRAFT',
+    pagination: {
+      limit: params.limit ?? 50,
+      lastKey: params.lastKey,
+    },
+  });
+
+  if (response.success) {
+    const payload = (response.data || {}) as any;
+    const items = payload.items || payload.dispatches || [];
+    return {
+      success: true,
+      data: {
+        items,
+        nextKey: payload.nextKey || null,
+      },
+      message: response.message,
+    };
+  }
+
+  return response as ApiResponse<{ items: DispatchRecord[]; nextKey?: string | null }>;
+};
+
+/**
+ * Update pallets for a DRAFT dispatch
+ */
+export const updateDispatchPallets = async (
+  id: string,
+  pallets: string[],
+  userId: string = 'mobile'
+): Promise<ApiResponse<DispatchRecord>> => {
+  if (!id) {
+    throw new apiClient.ApiClientError('El ID del despacho es obligatorio', 'VALIDATION_ERROR');
+  }
+  if (!Array.isArray(pallets)) {
+    throw new apiClient.ApiClientError('Los pallets deben ser un arreglo', 'VALIDATION_ERROR');
+  }
+
+  const response = await consolidatedApi.inventory.dispatch.update({
+    id,
+    updates: { pallets },
+    userId,
+  });
+
+  if (response.success) {
+    const payload = (response.data || {}) as any;
+    return {
+      success: true,
+      data: payload.dispatch || payload,
+      message: response.message,
+    };
+  }
+
+  return response as ApiResponse<DispatchRecord>;
+};
+
+/**
  * Endpoints object for easy access
  */
 export const endpoints = {
@@ -826,6 +904,8 @@ export const endpoints = {
   submitMovePallet,
   moveCart,
   submitMoveCart,
+  getDraftDispatches,
+  updateDispatchPallets,
 } as const;
 
 /**

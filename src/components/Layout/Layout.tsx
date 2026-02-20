@@ -14,6 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const getActiveTab = (): string => {
     const path = location.pathname;
     if (path.includes('/configuracion')) return 'configuracion';
+    if (path.includes('/dispatch')) return 'despachos';
     return 'escaneo';
   };
 
@@ -21,6 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const footerTabs = [
     { id: 'escaneo', icon: '📱', label: 'Escaneo', isActive: activeTab === 'escaneo' },
+    { id: 'despachos', icon: '🚚', label: 'Despacho', isActive: activeTab === 'despachos' },
     { id: 'configuracion', icon: '⚙️', label: 'Config', isActive: activeTab === 'configuracion' },
   ];
 
@@ -32,6 +34,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         break;
       case 'configuracion':
         navigate('/configuracion');
+        break;
+      case 'despachos':
+        navigate('/dispatch/drafts');
         break;
       default:
         navigate('/dashboard');

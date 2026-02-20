@@ -12,6 +12,7 @@ import CreateCartForm from '../views/Scanning/CreateCartForm';
 import AgregarCodigoCaja from '../views/Scanning/CreateCustomBox/AgregarCodigoCaja';
 import CrearCajaCustomLineas from '../views/Scanning/CreateCustomBox/CrearCajaCustomLineas';
 import RegistrarCaja from '../views/Scanning/RegistrarCajaNueva';
+import DispatchDrafts from '../views/Dispatch/DispatchDrafts';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -30,6 +31,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/enviar-pallet-transito" element={<SendPalletToTransit />} />
           <Route path="/enviar-carro-transito" element={<SendCartToTransit />} />
           <Route path="/agregar-carro" element={<CreateCartForm />} />
+          <Route path="/dispatch/drafts" element={<DispatchDrafts />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Layout>

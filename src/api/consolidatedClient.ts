@@ -193,6 +193,46 @@ export const inventoryApi = {
       return makeConsolidatedRequest('/inventory', 'cart', 'move', params);
     },
   },
+
+  /**
+   * Dispatch operations
+   */
+  dispatch: {
+    /**
+     * Get dispatches with optional filters and pagination
+     */
+    get: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/inventory', 'dispatch', 'get', params);
+    },
+
+    /**
+     * Create a new dispatch
+     */
+    create: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/inventory', 'dispatch', 'create', params);
+    },
+
+    /**
+     * Update a DRAFT dispatch
+     */
+    update: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/inventory', 'dispatch', 'update', params);
+    },
+
+    /**
+     * Approve a dispatch
+     */
+    approve: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/inventory', 'dispatch', 'approve', params);
+    },
+
+    /**
+     * Cancel a dispatch
+     */
+    cancel: async <T = any>(params: any): Promise<ApiResponse<T>> => {
+      return makeConsolidatedRequest('/inventory', 'dispatch', 'cancel', params);
+    },
+  },
 };
 
 /**
